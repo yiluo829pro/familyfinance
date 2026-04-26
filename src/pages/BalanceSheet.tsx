@@ -21,7 +21,7 @@ const INCOME_CATEGORIES: IncomeCategory[] = ['salary', 'bonus', 'rental', 'side_
 function AssetTableRow({ asset, onEdit, onDelete }: { asset: Asset; onEdit: (a: Asset) => void; onDelete: (id: string) => void }) {
   return (
     <tr className="border-b border-slate-50 hover:bg-slate-50 transition-colors group">
-      <td className="py-3 px-4">
+      <td className="py-3 px-4 w-full">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-medium text-slate-800">{asset.name}</span>
           {!asset.isLiquid && <Badge color="slate">Non-liquid</Badge>}
@@ -29,8 +29,8 @@ function AssetTableRow({ asset, onEdit, onDelete }: { asset: Asset; onEdit: (a: 
         </div>
         {asset.notes && <p className="text-xs text-slate-400 mt-0.5">{asset.notes}</p>}
       </td>
-      <td className="py-3 px-4 text-right text-sm font-semibold text-emerald-700">{formatCurrency(asset.value)}</td>
-      <td className="py-3 px-4 text-right">
+      <td className="py-3 px-4 text-right text-sm font-semibold text-emerald-700 whitespace-nowrap">{formatCurrency(asset.value)}</td>
+      <td className="py-3 px-4 w-32">
         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button size="sm" variant="ghost" onClick={() => onEdit(asset)}>Edit</Button>
           <Button size="sm" variant="ghost" onClick={() => onDelete(asset.id)}><span className="text-rose-500">Delete</span></Button>
@@ -90,20 +90,20 @@ export function BalanceSheet() {
                 <tbody>
                   {catIncome.map((src) => (
                     <tr key={src.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors group">
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 w-full">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-slate-800">{src.name}</span>
                           {!src.isActive && <Badge color="slate">Inactive</Badge>}
                           <Badge color="slate">{src.frequency === 'monthly' ? 'Monthly' : 'Annual'}</Badge>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-4 text-right whitespace-nowrap">
                         <p className="text-sm font-semibold text-indigo-700">{formatCurrency(annualizeIncome(src))}/yr</p>
                         {src.frequency === 'monthly' && (
                           <p className="text-xs text-slate-400">{formatCurrency(src.amount)}/mo</p>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-4 w-32">
                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Button size="sm" variant="ghost" onClick={() => setIncomeModal({ open: true, existing: src })}>Edit</Button>
                           <Button size="sm" variant="ghost" onClick={() => deleteIncome(src.id)}><span className="text-rose-500">Delete</span></Button>
@@ -194,24 +194,24 @@ export function BalanceSheet() {
           <table className="w-full mb-4">
             <thead>
               <tr className="border-b border-slate-100">
-                <th className="text-left text-xs font-medium text-slate-500 py-2 px-4">Name</th>
-                <th className="text-right text-xs font-medium text-slate-500 py-2 px-4">Balance</th>
-                <th className="text-right text-xs font-medium text-slate-500 py-2 px-4">Rate</th>
-                <th className="text-right text-xs font-medium text-slate-500 py-2 px-4">Monthly</th>
-                <th className="py-2 px-4" />
+                <th className="text-left text-xs font-medium text-slate-500 py-2 px-4 w-full">Name</th>
+                <th className="text-right text-xs font-medium text-slate-500 py-2 px-4 whitespace-nowrap">Balance</th>
+                <th className="text-right text-xs font-medium text-slate-500 py-2 px-4 whitespace-nowrap">Rate</th>
+                <th className="text-right text-xs font-medium text-slate-500 py-2 px-4 whitespace-nowrap">Monthly</th>
+                <th className="py-2 px-4 w-32" />
               </tr>
             </thead>
             <tbody>
               {liabilities.map((l) => (
                 <tr key={l.id} className="border-b border-slate-50 hover:bg-slate-50 group transition-colors">
-                  <td className="py-3 px-4">
+                  <td className="py-3 px-4 w-full">
                     <p className="text-sm font-medium text-slate-800">{l.name}</p>
                     <Badge color="slate">{LIABILITY_LABELS[l.category]}</Badge>
                   </td>
-                  <td className="py-3 px-4 text-right text-sm font-semibold text-rose-700">-{formatCurrency(l.balance)}</td>
-                  <td className="py-3 px-4 text-right text-sm text-slate-500">{l.interestRate != null ? `${l.interestRate}%` : '—'}</td>
-                  <td className="py-3 px-4 text-right text-sm text-slate-500">{l.monthlyPayment != null ? formatCurrency(l.monthlyPayment) : '—'}</td>
-                  <td className="py-3 px-4">
+                  <td className="py-3 px-4 text-right text-sm font-semibold text-rose-700 whitespace-nowrap">-{formatCurrency(l.balance)}</td>
+                  <td className="py-3 px-4 text-right text-sm text-slate-500 whitespace-nowrap">{l.interestRate != null ? `${l.interestRate}%` : '—'}</td>
+                  <td className="py-3 px-4 text-right text-sm text-slate-500 whitespace-nowrap">{l.monthlyPayment != null ? formatCurrency(l.monthlyPayment) : '—'}</td>
+                  <td className="py-3 px-4 w-32">
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button size="sm" variant="ghost" onClick={() => setLiabilityModal({ open: true, existing: l })}>Edit</Button>
                       <Button size="sm" variant="ghost" onClick={() => deleteLiability(l.id)}><span className="text-rose-500">Delete</span></Button>
@@ -245,23 +245,26 @@ export function BalanceSheet() {
         )}
       </div>
 
-      {/* Modals */}
+      {/* Modals — key forces remount so form state resets when switching items */}
       <IncomeForm
+        key={incomeModal.existing?.id ?? 'new-income'}
         open={incomeModal.open}
         existing={incomeModal.existing}
-        onClose={() => setIncomeModal({ open: false })}
+        onClose={() => setIncomeModal({ open: false, existing: undefined })}
         onSave={incomeModal.existing ? (data) => updateIncome(incomeModal.existing!.id, data) : addIncome}
       />
       <AssetForm
+        key={assetModal.existing?.id ?? 'new-asset'}
         open={assetModal.open}
         existing={assetModal.existing}
-        onClose={() => setAssetModal({ open: false })}
+        onClose={() => setAssetModal({ open: false, existing: undefined })}
         onSave={assetModal.existing ? (data) => updateAsset(assetModal.existing!.id, data) : addAsset}
       />
       <LiabilityForm
+        key={liabilityModal.existing?.id ?? 'new-liability'}
         open={liabilityModal.open}
         existing={liabilityModal.existing}
-        onClose={() => setLiabilityModal({ open: false })}
+        onClose={() => setLiabilityModal({ open: false, existing: undefined })}
         onSave={liabilityModal.existing ? (data) => updateLiability(liabilityModal.existing!.id, data) : addLiability}
       />
     </div>
