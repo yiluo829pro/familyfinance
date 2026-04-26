@@ -1,17 +1,20 @@
 import { createContext, useContext, useEffect, type ReactNode } from 'react'
-import type { Asset, Liability, FireAssumptions, NetWorthSnapshot, FireResult } from '@/types'
+import type { Asset, Liability, IncomeSource, FireAssumptions, NetWorthSnapshot, FireResult } from '@/types'
 import { useFinancialData } from '@/hooks/useFinancialData'
 import { useFireCalculations } from '@/hooks/useFireCalculations'
+import { computeTotalAnnualIncome } from '@/lib/calculations'
 import { checkAndMigrateSchema } from '@/lib/storage'
 
 interface FinancialContextValue {
   assets: Asset[]
   liabilities: Liability[]
+  income: IncomeSource[]
   assumptions: FireAssumptions
   snapshots: NetWorthSnapshot[]
   fireResult: FireResult
   totalAssets: number
   totalLiabilities: number
+  totalAnnualIncome: number
   netWorth: number
   addAsset: (data: Omit<Asset, 'id' | 'lastUpdated'>) => void
   updateAsset: (id: string, data: Partial<Omit<Asset, 'id'>>) => void
@@ -19,8 +22,11 @@ interface FinancialContextValue {
   addLiability: (data: Omit<Liability, 'id' | 'lastUpdated'>) => void
   updateLiability: (id: string, data: Partial<Omit<Liability, 'id'>>) => void
   deleteLiability: (id: string) => void
+  addIncome: (data: Omit<IncomeSource, 'id' | 'lastUpdated'>) => void
+  updateIncome: (id: string, data: Partial<Omit<IncomeSource, 'id'>>) => void
+  deleteIncome: (id: string) => void
   updateAssumptions: (data: Partial<FireAssumptions>) => void
-  loadDemoData: (assets: Asset[], liabilities: Liability[], snapshots: NetWorthSnapshot[]) => void
+  loadDemoData: (assets: Asset[], liabilities: Liability[], snapshots: NetWorthSnapshot[], income: IncomeSource[]) => void
   clearAllData: () => void
 }
 
@@ -32,15 +38,16 @@ export function FinancialProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const data = useFinancialData()
-  const fireResult = useFireCalculations(data.assets, data.assumptions)
+  const fireResult = useFireCalculations(data.assets, data.income, data.assumptions)
 
   const totalAssets = data.assets.reduce((s, a) => s + a.value, 0)
   const totalLiabilities = data.liabilities.reduce((s, l) => s + l.balance, 0)
+  const totalAnnualIncome = computeTotalAnnualIncome(data.income)
   const netWorth = totalAssets - totalLiabilities
 
   return (
     <FinancialContext.Provider
-      value={{ ...data, fireResult, totalAssets, totalLiabilities, netWorth }}
+      value={{ ...data, fireResult, totalAssets, totalLiabilities, totalAnnualIncome, netWorth }}
     >
       {children}
     </FinancialContext.Provider>

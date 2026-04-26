@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import type { Asset, Liability, FireAssumptions, NetWorthSnapshot } from '@/types'
+import type { Asset, Liability, IncomeSource, FireAssumptions, NetWorthSnapshot } from '@/types'
 import { getFromStorage, setToStorage } from '@/lib/storage'
 import { generateId, today } from '@/lib/utils'
 import { STORAGE_KEYS, FIRE_DEFAULTS } from '@/constants'
@@ -22,6 +22,9 @@ export function useFinancialData() {
   )
   const [liabilities, setLiabilities] = useState<Liability[]>(() =>
     getFromStorage<Liability[]>(STORAGE_KEYS.LIABILITIES, []),
+  )
+  const [income, setIncome] = useState<IncomeSource[]>(() =>
+    getFromStorage<IncomeSource[]>(STORAGE_KEYS.INCOME, []),
   )
   const [assumptions, setAssumptions] = useState<FireAssumptions>(() =>
     getFromStorage<FireAssumptions>(STORAGE_KEYS.ASSUMPTIONS, FIRE_DEFAULTS),
@@ -90,6 +93,30 @@ export function useFinancialData() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assets, snapshots])
 
+  const addIncome = useCallback((data: Omit<IncomeSource, 'id' | 'lastUpdated'>) => {
+    setIncome((prev) => {
+      const next = [...prev, { ...data, id: generateId(), lastUpdated: today() }]
+      setToStorage(STORAGE_KEYS.INCOME, next)
+      return next
+    })
+  }, [])
+
+  const updateIncome = useCallback((id: string, data: Partial<Omit<IncomeSource, 'id'>>) => {
+    setIncome((prev) => {
+      const next = prev.map((i) => (i.id === id ? { ...i, ...data, lastUpdated: today() } : i))
+      setToStorage(STORAGE_KEYS.INCOME, next)
+      return next
+    })
+  }, [])
+
+  const deleteIncome = useCallback((id: string) => {
+    setIncome((prev) => {
+      const next = prev.filter((i) => i.id !== id)
+      setToStorage(STORAGE_KEYS.INCOME, next)
+      return next
+    })
+  }, [])
+
   const updateAssumptions = useCallback((data: Partial<FireAssumptions>) => {
     setAssumptions((prev) => {
       const next = { ...prev, ...data }
@@ -99,13 +126,15 @@ export function useFinancialData() {
   }, [])
 
   const loadDemoData = useCallback(
-    (demoAssets: Asset[], demoLiabilities: Liability[], demoSnapshots: NetWorthSnapshot[]) => {
+    (demoAssets: Asset[], demoLiabilities: Liability[], demoSnapshots: NetWorthSnapshot[], demoIncome: IncomeSource[]) => {
       setAssets(demoAssets)
       setLiabilities(demoLiabilities)
       setSnapshots(demoSnapshots)
+      setIncome(demoIncome)
       setToStorage(STORAGE_KEYS.ASSETS, demoAssets)
       setToStorage(STORAGE_KEYS.LIABILITIES, demoLiabilities)
       setToStorage(STORAGE_KEYS.SNAPSHOTS, demoSnapshots)
+      setToStorage(STORAGE_KEYS.INCOME, demoIncome)
     },
     [],
   )
@@ -113,10 +142,12 @@ export function useFinancialData() {
   const clearAllData = useCallback(() => {
     setAssets([])
     setLiabilities([])
+    setIncome([])
     setSnapshots([])
     setAssumptions(FIRE_DEFAULTS)
     setToStorage(STORAGE_KEYS.ASSETS, [])
     setToStorage(STORAGE_KEYS.LIABILITIES, [])
+    setToStorage(STORAGE_KEYS.INCOME, [])
     setToStorage(STORAGE_KEYS.SNAPSHOTS, [])
     setToStorage(STORAGE_KEYS.ASSUMPTIONS, FIRE_DEFAULTS)
   }, [])
@@ -124,6 +155,7 @@ export function useFinancialData() {
   return {
     assets,
     liabilities,
+    income,
     assumptions,
     snapshots,
     addAsset,
@@ -132,6 +164,9 @@ export function useFinancialData() {
     addLiability,
     updateLiability,
     deleteLiability,
+    addIncome,
+    updateIncome,
+    deleteIncome,
     updateAssumptions,
     loadDemoData,
     clearAllData,

@@ -1,4 +1,4 @@
-import type { Asset, FireAssumptions, FireResult, ProjectionPoint } from '@/types'
+import type { Asset, IncomeSource, FireAssumptions, FireResult, ProjectionPoint } from '@/types'
 
 function realReturnRate(nominalReturn: number, inflation: number): number {
   return (1 + nominalReturn) / (1 + inflation) - 1
@@ -26,6 +26,14 @@ function futureValue(P: number, PMT: number, r: number, n: number): number {
   return P * Math.pow(1 + r, n) + PMT * ((Math.pow(1 + r, n) - 1) / r)
 }
 
+export function annualizeIncome(source: IncomeSource): number {
+  return source.frequency === 'monthly' ? source.amount * 12 : source.amount
+}
+
+export function computeTotalAnnualIncome(income: IncomeSource[]): number {
+  return income.filter((i) => i.isActive).reduce((sum, i) => sum + annualizeIncome(i), 0)
+}
+
 export function computeInvestableNetWorth(assets: Asset[], assumptions: FireAssumptions): number {
   return assets
     .filter((a) => a.isLiquid || (assumptions.includeRealEstateInFire && a.category === 'real_estate'))
@@ -33,18 +41,32 @@ export function computeInvestableNetWorth(assets: Asset[], assumptions: FireAssu
 }
 
 export function computeEffectiveAnnualExpenses(assumptions: FireAssumptions): number {
-  const childCost = assumptions.plannedChildren * assumptions.childAnnualCost
-  return assumptions.annualExpenses + childCost
+  return assumptions.annualExpenses + assumptions.plannedChildren * assumptions.childAnnualCost
+}
+
+export function computeEffectiveSavings(
+  income: IncomeSource[],
+  assumptions: FireAssumptions,
+  effectiveExpenses: number,
+): { savings: number; savingsRate: number } {
+  const totalIncome = computeTotalAnnualIncome(income)
+  if (assumptions.useIncomeDerivedSavings && totalIncome > 0) {
+    const savings = Math.max(totalIncome - effectiveExpenses, 0)
+    return { savings, savingsRate: totalIncome > 0 ? savings / totalIncome : 0 }
+  }
+  const savingsRate = totalIncome > 0 ? assumptions.annualSavings / totalIncome : 0
+  return { savings: assumptions.annualSavings, savingsRate }
 }
 
 export function computeFireResult(
   assets: Asset[],
+  income: IncomeSource[],
   assumptions: FireAssumptions,
 ): FireResult {
   const r = realReturnRate(assumptions.expectedReturnRate, assumptions.inflationRate)
   const P = computeInvestableNetWorth(assets, assumptions)
-  const PMT = assumptions.annualSavings
   const effectiveExpenses = computeEffectiveAnnualExpenses(assumptions)
+  const { savings: PMT, savingsRate } = computeEffectiveSavings(income, assumptions, effectiveExpenses)
 
   const leanTarget = effectiveExpenses * assumptions.leanFireMultiplier * 25
   const regularTarget = effectiveExpenses * 25
@@ -53,7 +75,6 @@ export function computeFireResult(
   const yearsToRetirement = assumptions.targetRetirementAge - assumptions.currentAge
   const coastNumber = regularTarget / Math.pow(1 + r, Math.max(yearsToRetirement, 1))
   const isCoasting = P >= coastNumber
-
   const yearsToCoastFire = isCoasting ? 0 : yearsToTarget(P, PMT, r, coastNumber)
 
   const leanYears = yearsToTarget(P, PMT, r, leanTarget)
@@ -78,6 +99,8 @@ export function computeFireResult(
   return {
     investableNetWorth: P,
     effectiveAnnualExpenses: effectiveExpenses,
+    effectiveAnnualSavings: PMT,
+    savingsRate,
     leanFire: {
       target: leanTarget,
       yearsToFire: leanYears,

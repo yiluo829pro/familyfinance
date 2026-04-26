@@ -1,14 +1,15 @@
-import type { Asset, Liability, FireAssumptions, NetWorthSnapshot } from '@/types'
+import type { Asset, Liability, IncomeSource, FireAssumptions, NetWorthSnapshot } from '@/types'
 
 export const STORAGE_KEYS = {
   ASSETS: 'ff_assets',
   LIABILITIES: 'ff_liabilities',
+  INCOME: 'ff_income',
   ASSUMPTIONS: 'ff_assumptions',
   SNAPSHOTS: 'ff_snapshots',
   SCHEMA_VERSION: 'ff_schema_version',
 } as const
 
-export const SCHEMA_VERSION = '1'
+export const SCHEMA_VERSION = '2'
 
 export const CATEGORY_COLORS: Record<string, string> = {
   real_estate: '#6366f1',
@@ -32,6 +33,24 @@ export const LIABILITY_LABELS: Record<string, string> = {
   other: 'Other',
 }
 
+export const INCOME_LABELS: Record<string, string> = {
+  salary: 'Salary',
+  bonus: 'Bonus / Commission',
+  rental: 'Rental Income',
+  side_income: 'Side Income',
+  investment_income: 'Investment Income',
+  other: 'Other',
+}
+
+export const INCOME_COLORS: Record<string, string> = {
+  salary: '#6366f1',
+  bonus: '#8b5cf6',
+  rental: '#10b981',
+  side_income: '#f59e0b',
+  investment_income: '#3b82f6',
+  other: '#94a3b8',
+}
+
 export const FIRE_DEFAULTS: FireAssumptions = {
   currentAge: 35,
   partnerAge: 33,
@@ -42,6 +61,7 @@ export const FIRE_DEFAULTS: FireAssumptions = {
   expectedReturnRate: 0.07,
   inflationRate: 0.03,
   annualSavings: 36000,
+  useIncomeDerivedSavings: true,
   includeRealEstateInFire: false,
   plannedChildren: 1,
   childAnnualCost: 15000,
@@ -117,6 +137,45 @@ export const DEMO_LIABILITIES: Liability[] = [
     balance: 18000,
     interestRate: 5.9,
     monthlyPayment: 420,
+    lastUpdated: new Date().toISOString().slice(0, 10),
+  },
+]
+
+export const DEMO_INCOME: IncomeSource[] = [
+  {
+    id: 'demo-i1',
+    name: 'Primary Salary',
+    category: 'salary',
+    amount: 120000,
+    frequency: 'annual',
+    isActive: true,
+    lastUpdated: new Date().toISOString().slice(0, 10),
+  },
+  {
+    id: 'demo-i2',
+    name: 'Partner Salary',
+    category: 'salary',
+    amount: 85000,
+    frequency: 'annual',
+    isActive: true,
+    lastUpdated: new Date().toISOString().slice(0, 10),
+  },
+  {
+    id: 'demo-i3',
+    name: 'Annual Bonus',
+    category: 'bonus',
+    amount: 15000,
+    frequency: 'annual',
+    isActive: true,
+    lastUpdated: new Date().toISOString().slice(0, 10),
+  },
+  {
+    id: 'demo-i4',
+    name: 'Freelance / Side Work',
+    category: 'side_income',
+    amount: 1200,
+    frequency: 'monthly',
+    isActive: true,
     lastUpdated: new Date().toISOString().slice(0, 10),
   },
 ]

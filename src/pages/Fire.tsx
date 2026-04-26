@@ -5,6 +5,8 @@ import { ProgressBar } from '@/components/ui/ProgressBar'
 import { Badge } from '@/components/ui/Badge'
 import { FireTimeline } from '@/components/charts/FireTimeline'
 import { formatCurrency, formatPercent } from '@/lib/utils'
+import { annualizeIncome } from '@/lib/calculations'
+import { INCOME_LABELS, INCOME_COLORS } from '@/constants'
 import type { FireVariantResult, CoastFireResult } from '@/types'
 
 interface FireCardProps {
@@ -78,7 +80,7 @@ function FireCard({ label, variant, result, coastResult, description }: FireCard
 }
 
 export function Fire() {
-  const { assumptions, updateAssumptions, fireResult, assets } = useFinancial()
+  const { assumptions, updateAssumptions, fireResult, assets, income, totalAnnualIncome } = useFinancial()
 
   const handleNum = (field: keyof typeof assumptions) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value)
@@ -256,6 +258,86 @@ export function Fire() {
       {noAssets && (
         <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-sm text-amber-700">
           Add your assets on the Balance Sheet page to see your FIRE progress.
+        </div>
+      )}
+
+      {/* Income summary */}
+      {income.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Income Breakdown</CardTitle>
+            <span className="text-sm text-slate-500">
+              Total: <strong className="text-indigo-700">{formatCurrency(totalAnnualIncome)}/yr</strong>
+            </span>
+          </CardHeader>
+          <div className="space-y-2 mb-4">
+            {income.filter((i) => i.isActive).map((src) => {
+              const annual = annualizeIncome(src)
+              const pct = totalAnnualIncome > 0 ? annual / totalAnnualIncome : 0
+              return (
+                <div key={src.id} className="flex items-center gap-3">
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: INCOME_COLORS[src.category] }} />
+                  <span className="text-sm text-slate-700 flex-1">{src.name}</span>
+                  <span className="text-xs text-slate-400">{INCOME_LABELS[src.category]}</span>
+                  <span className="text-sm font-semibold text-slate-800 w-28 text-right">{formatCurrency(annual)}/yr</span>
+                  <span className="text-xs text-slate-400 w-12 text-right">{formatPercent(pct, 0)}</span>
+                </div>
+              )
+            })}
+          </div>
+          <div className="border-t border-slate-100 pt-3 grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p className="text-xs text-slate-500 mb-1">Total Income</p>
+              <p className="text-lg font-bold text-indigo-700">{formatCurrency(totalAnnualIncome)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 mb-1">Annual Savings</p>
+              <p className={`text-lg font-bold ${fireResult.effectiveAnnualSavings >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                {formatCurrency(fireResult.effectiveAnnualSavings)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 mb-1">Savings Rate</p>
+              <p className={`text-lg font-bold ${fireResult.savingsRate >= 0.3 ? 'text-emerald-700' : fireResult.savingsRate >= 0.15 ? 'text-amber-700' : 'text-rose-700'}`}>
+                {formatPercent(fireResult.savingsRate)}
+              </p>
+              <p className="text-xs text-slate-400">{fireResult.savingsRate >= 0.3 ? 'Excellent' : fireResult.savingsRate >= 0.15 ? 'Good' : 'Low'}</p>
+            </div>
+          </div>
+          <div className="mt-3">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={assumptions.useIncomeDerivedSavings}
+                onChange={(e) => updateAssumptions({ useIncomeDerivedSavings: e.target.checked })}
+                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="text-sm text-slate-700">
+                Auto-compute savings from income − expenses (recommended)
+              </span>
+            </label>
+            {!assumptions.useIncomeDerivedSavings && (
+              <div className="mt-3 max-w-xs">
+                <Input
+                  label="Manual Annual Savings Override"
+                  type="number"
+                  min={0}
+                  value={assumptions.annualSavings}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value)
+                    if (!isNaN(val)) updateAssumptions({ annualSavings: val })
+                  }}
+                  prefix="$"
+                />
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {income.length === 0 && (
+        <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-sm text-indigo-700">
+          Add income sources on the <a href="/balance-sheet" className="font-semibold underline">Balance Sheet</a> page to auto-calculate your savings rate.
         </div>
       )}
 

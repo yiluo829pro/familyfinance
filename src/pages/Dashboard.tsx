@@ -6,14 +6,14 @@ import { Button } from '@/components/ui/Button'
 import { AllocationDonut } from '@/components/charts/AllocationDonut'
 import { NetWorthLine } from '@/components/charts/NetWorthLine'
 import { formatCurrency, formatPercent } from '@/lib/utils'
-import { CATEGORY_LABELS, DEMO_ASSETS, DEMO_LIABILITIES, DEMO_SNAPSHOTS } from '@/constants'
+import { CATEGORY_LABELS, DEMO_ASSETS, DEMO_LIABILITIES, DEMO_SNAPSHOTS, DEMO_INCOME } from '@/constants'
 import type { AssetCategory } from '@/types'
 
 export function Dashboard() {
-  const { assets, liabilities, snapshots, netWorth, totalAssets, totalLiabilities, fireResult, loadDemoData } =
+  const { assets, liabilities, income, snapshots, netWorth, totalAssets, totalLiabilities, totalAnnualIncome, fireResult, loadDemoData } =
     useFinancial()
 
-  const isEmpty = assets.length === 0 && liabilities.length === 0
+  const isEmpty = assets.length === 0 && liabilities.length === 0 && income.length === 0
 
   // Build allocation data grouped by category
   const allocationData = Object.entries(
@@ -44,7 +44,7 @@ export function Dashboard() {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button onClick={() => loadDemoData(DEMO_ASSETS, DEMO_LIABILITIES, DEMO_SNAPSHOTS)}>
+          <Button onClick={() => loadDemoData(DEMO_ASSETS, DEMO_LIABILITIES, DEMO_SNAPSHOTS, DEMO_INCOME)}>
             Load Demo Data
           </Button>
           <Button variant="secondary" onClick={() => window.location.assign('/balance-sheet')}>
@@ -85,14 +85,14 @@ export function Dashboard() {
       {/* Key stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          label="FIRE Target"
-          value={formatCurrency(regularFire.target, true)}
+          label="Annual Income"
+          value={totalAnnualIncome > 0 ? formatCurrency(totalAnnualIncome, true) : '—'}
           valueClassName="text-indigo-700"
         />
         <StatCard
-          label="Investable Assets"
-          value={formatCurrency(fireResult.investableNetWorth, true)}
-          valueClassName="text-emerald-700"
+          label="Savings Rate"
+          value={fireResult.savingsRate > 0 ? formatPercent(fireResult.savingsRate) : '—'}
+          valueClassName={fireResult.savingsRate >= 0.2 ? 'text-emerald-700' : 'text-amber-700'}
         />
         <StatCard
           label="FIRE Progress"

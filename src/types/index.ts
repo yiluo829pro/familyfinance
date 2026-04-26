@@ -1,5 +1,7 @@
 export type AssetCategory = 'real_estate' | 'investments' | 'retirement' | 'cash_alternatives'
 export type LiabilityCategory = 'mortgage' | 'car_loan' | 'student_loan' | 'credit_card' | 'other'
+export type IncomeCategory = 'salary' | 'bonus' | 'rental' | 'side_income' | 'investment_income' | 'other'
+export type IncomeFrequency = 'monthly' | 'annual'
 
 export interface Asset {
   id: string
@@ -22,6 +24,16 @@ export interface Liability {
   lastUpdated: string
 }
 
+export interface IncomeSource {
+  id: string
+  name: string
+  category: IncomeCategory
+  amount: number
+  frequency: IncomeFrequency
+  isActive: boolean
+  lastUpdated: string
+}
+
 export interface FireAssumptions {
   currentAge: number
   partnerAge?: number
@@ -32,6 +44,7 @@ export interface FireAssumptions {
   expectedReturnRate: number
   inflationRate: number
   annualSavings: number
+  useIncomeDerivedSavings: boolean
   includeRealEstateInFire: boolean
   plannedChildren: number
   childAnnualCost: number
@@ -70,6 +83,8 @@ export interface ProjectionPoint {
 export interface FireResult {
   investableNetWorth: number
   effectiveAnnualExpenses: number
+  effectiveAnnualSavings: number
+  savingsRate: number
   leanFire: FireVariantResult
   regularFire: FireVariantResult
   fatFire: FireVariantResult
