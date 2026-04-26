@@ -6,17 +6,20 @@ import { BalanceSheet } from '@/pages/BalanceSheet'
 import { Portfolio } from '@/pages/Portfolio'
 import { Fire } from '@/pages/Fire'
 
-const router = createBrowserRouter([
-  {
-    element: <Layout />,
-    children: [
-      { index: true, element: <Dashboard />, handle: { title: 'Dashboard' } },
-      { path: '/balance-sheet', element: <BalanceSheet />, handle: { title: 'Balance Sheet' } },
-      { path: '/portfolio', element: <Portfolio />, handle: { title: 'Portfolio' } },
-      { path: '/fire', element: <Fire />, handle: { title: 'FIRE Calculator' } },
-    ],
-  },
-])
+const router = createBrowserRouter(
+  [
+    {
+      element: <Layout />,
+      children: [
+        { index: true, element: <Dashboard />, handle: { title: 'Dashboard' } },
+        { path: '/balance-sheet', element: <BalanceSheet />, handle: { title: 'Balance Sheet' } },
+        { path: '/portfolio', element: <Portfolio />, handle: { title: 'Portfolio' } },
+        { path: '/fire', element: <Fire />, handle: { title: 'FIRE Calculator' } },
+      ],
+    },
+  ],
+  { basename: import.meta.env.BASE_URL },
+)
 
 export function App() {
   return (
