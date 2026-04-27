@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { NetWorthSnapshot } from '@/types'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -7,31 +8,36 @@ interface SnapshotFormProps {
   open: boolean
   onClose: () => void
   onSave: (date: string, totalAssets: number, totalLiabilities: number) => void
+  onDelete?: (date: string) => void
+  existing?: NetWorthSnapshot
   defaultAssets?: number
   defaultLiabilities?: number
 }
 
-export function SnapshotForm({ open, onClose, onSave, defaultAssets = 0, defaultLiabilities = 0 }: SnapshotFormProps) {
-  const [date, setDate] = useState('')
-  const [assets, setAssets] = useState(String(defaultAssets))
-  const [liabilities, setLiabilities] = useState(String(defaultLiabilities))
+export function SnapshotForm({
+  open, onClose, onSave, onDelete,
+  existing, defaultAssets = 0, defaultLiabilities = 0,
+}: SnapshotFormProps) {
+  const [date, setDate] = useState(existing ? existing.date.slice(0, 7) : '')
+  const [assets, setAssets] = useState(existing ? String(existing.totalAssets) : String(defaultAssets))
+  const [liabilities, setLiabilities] = useState(existing ? String(existing.totalLiabilities) : String(defaultLiabilities))
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const a = parseFloat(assets.replace(/,/g, ''))
     const l = parseFloat(liabilities.replace(/,/g, ''))
     if (!date || isNaN(a) || isNaN(l)) return
+    if (existing && existing.date !== date + '-01') {
+      onDelete?.(existing.date)
+    }
     onSave(date + '-01', a, l)
     onClose()
-    setDate('')
-    setAssets(String(defaultAssets))
-    setLiabilities(String(defaultLiabilities))
   }
 
   const netWorth = (parseFloat(assets) || 0) - (parseFloat(liabilities) || 0)
 
   return (
-    <Modal open={open} onClose={onClose} title="Add Historical Snapshot">
+    <Modal open={open} onClose={onClose} title={existing ? 'Edit Snapshot' : 'Add Historical Snapshot'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           label="Date"
@@ -41,7 +47,7 @@ export function SnapshotForm({ open, onClose, onSave, defaultAssets = 0, default
           required
         />
         <Input
-          label="Total Assets at that time"
+          label="Total Assets"
           type="number"
           min={0}
           step={1}
@@ -51,7 +57,7 @@ export function SnapshotForm({ open, onClose, onSave, defaultAssets = 0, default
           required
         />
         <Input
-          label="Total Liabilities at that time"
+          label="Total Liabilities"
           type="number"
           min={0}
           step={1}
@@ -67,7 +73,7 @@ export function SnapshotForm({ open, onClose, onSave, defaultAssets = 0, default
         )}
         <div className="flex justify-end gap-3 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button type="submit">Save Snapshot</Button>
+          <Button type="submit">{existing ? 'Save Changes' : 'Save Snapshot'}</Button>
         </div>
       </form>
     </Modal>

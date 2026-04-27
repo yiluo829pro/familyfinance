@@ -15,7 +15,7 @@ import {
   DEMO_ASSETS, DEMO_LIABILITIES, DEMO_SNAPSHOTS, DEMO_INCOME,
 } from '@/constants'
 import { annualizeIncome } from '@/lib/calculations'
-import type { Asset, Liability, IncomeSource, AssetCategory, IncomeCategory } from '@/types'
+import type { Asset, Liability, IncomeSource, AssetCategory, IncomeCategory, NetWorthSnapshot } from '@/types'
 
 const ASSET_CATEGORIES: AssetCategory[] = ['real_estate', 'investments', 'retirement', 'cash_alternatives']
 const INCOME_CATEGORIES: IncomeCategory[] = ['salary', 'bonus', 'rental', 'side_income', 'investment_income', 'other']
@@ -55,7 +55,7 @@ export function BalanceSheet() {
   const [assetModal, setAssetModal] = useState<{ open: boolean; existing?: Asset }>({ open: false })
   const [liabilityModal, setLiabilityModal] = useState<{ open: boolean; existing?: Liability }>({ open: false })
   const [incomeModal, setIncomeModal] = useState<{ open: boolean; existing?: IncomeSource }>({ open: false })
-  const [snapshotFormOpen, setSnapshotFormOpen] = useState(false)
+  const [snapshotModal, setSnapshotModal] = useState<{ open: boolean; existing?: NetWorthSnapshot }>({ open: false })
 
   const isEmpty = assets.length === 0 && liabilities.length === 0 && income.length === 0
   const estimatedSavings = fireResult.effectiveAnnualSavings
@@ -253,7 +253,7 @@ export function BalanceSheet() {
       <Card>
         <CardHeader>
           <CardTitle>Net Worth History</CardTitle>
-          <Button size="sm" variant="secondary" onClick={() => setSnapshotFormOpen(true)}>
+          <Button size="sm" variant="secondary" onClick={() => setSnapshotModal({ open: true, existing: undefined })}>
             + Add Past Snapshot
           </Button>
         </CardHeader>
@@ -267,7 +267,7 @@ export function BalanceSheet() {
                   <th className="text-right text-xs font-medium text-slate-500 py-2 whitespace-nowrap px-4">Assets</th>
                   <th className="text-right text-xs font-medium text-slate-500 py-2 whitespace-nowrap px-4">Liabilities</th>
                   <th className="text-right text-xs font-medium text-slate-500 py-2 whitespace-nowrap px-4">Net Worth</th>
-                  <th className="w-12 py-2" />
+                  <th className="w-32 py-2" />
                 </tr>
               </thead>
               <tbody>
@@ -279,13 +279,13 @@ export function BalanceSheet() {
                     <td className={`py-2 px-4 text-right font-semibold ${s.netWorth >= 0 ? 'text-slate-800' : 'text-rose-700'}`}>
                       {formatCurrency(s.netWorth, true)}
                     </td>
-                    <td className="py-2 text-right">
-                      <button
-                        onClick={() => deleteSnapshot(s.date)}
-                        className="text-xs text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
-                      >
-                        ✕
-                      </button>
+                    <td className="py-2 w-32">
+                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button size="sm" variant="ghost" onClick={() => setSnapshotModal({ open: true, existing: s })}>Edit</Button>
+                        <Button size="sm" variant="ghost" onClick={() => deleteSnapshot(s.date)}>
+                          <span className="text-rose-500">Delete</span>
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -323,9 +323,12 @@ export function BalanceSheet() {
         onSave={liabilityModal.existing ? (data) => updateLiability(liabilityModal.existing!.id, data) : addLiability}
       />
       <SnapshotForm
-        open={snapshotFormOpen}
-        onClose={() => setSnapshotFormOpen(false)}
+        key={snapshotModal.existing?.date ?? 'new-snapshot'}
+        open={snapshotModal.open}
+        existing={snapshotModal.existing}
+        onClose={() => setSnapshotModal({ open: false, existing: undefined })}
         onSave={addManualSnapshot}
+        onDelete={deleteSnapshot}
         defaultAssets={totalAssets}
         defaultLiabilities={totalLiabilities}
       />
