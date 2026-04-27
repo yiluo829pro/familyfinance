@@ -21,7 +21,7 @@ export function SnapshotForm({ open, onClose, onSave, defaultAssets = 0, default
     const a = parseFloat(assets.replace(/,/g, ''))
     const l = parseFloat(liabilities.replace(/,/g, ''))
     if (!date || isNaN(a) || isNaN(l)) return
-    onSave(date, a, l)
+    onSave(date + '-01', a, l)
     onClose()
     setDate('')
     setAssets(String(defaultAssets))
@@ -37,7 +37,7 @@ export function SnapshotForm({ open, onClose, onSave, defaultAssets = 0, default
           label="Date"
           type="month"
           value={date}
-          onChange={(e) => setDate(e.target.value + '-01')}
+          onChange={(e) => setDate(e.target.value)}
           required
         />
         <Input
