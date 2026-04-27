@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, type ReactNode } from 'react'
-import type { Asset, Liability, IncomeSource, FireAssumptions, NetWorthSnapshot, FireResult } from '@/types'
+import type { Asset, Liability, IncomeSource, FireAssumptions, NetWorthSnapshot, FireResult, Scenario } from '@/types'
 import { useFinancialData } from '@/hooks/useFinancialData'
 import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { computeTotalAnnualIncome } from '@/lib/calculations'
@@ -26,6 +26,12 @@ interface FinancialContextValue {
   updateIncome: (id: string, data: Partial<Omit<IncomeSource, 'id'>>) => void
   deleteIncome: (id: string) => void
   updateAssumptions: (data: Partial<FireAssumptions>) => void
+  addManualSnapshot: (date: string, totalAssets: number, totalLiabilities: number) => void
+  deleteSnapshot: (date: string) => void
+  scenarios: Scenario[]
+  addScenario: (data: Omit<Scenario, 'id'>) => void
+  updateScenario: (id: string, data: Partial<Omit<Scenario, 'id'>>) => void
+  deleteScenario: (id: string) => void
   loadDemoData: (assets: Asset[], liabilities: Liability[], snapshots: NetWorthSnapshot[], income: IncomeSource[]) => void
   clearAllData: () => void
 }

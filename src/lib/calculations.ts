@@ -1,4 +1,4 @@
-import type { Asset, IncomeSource, FireAssumptions, FireResult, ProjectionPoint } from '@/types'
+import type { Asset, IncomeSource, FireAssumptions, FireResult, ProjectionPoint, Scenario } from '@/types'
 
 function realReturnRate(nominalReturn: number, inflation: number): number {
   return (1 + nominalReturn) / (1 + inflation) - 1
@@ -56,6 +56,23 @@ export function computeEffectiveSavings(
   }
   const savingsRate = totalIncome > 0 ? assumptions.annualSavings / totalIncome : 0
   return { savings: assumptions.annualSavings, savingsRate }
+}
+
+export function computeScenarioFireResult(
+  assets: Asset[],
+  income: IncomeSource[],
+  assumptions: FireAssumptions,
+  scenario: Scenario,
+): FireResult {
+  const scenarioIncome = income.map((src) => {
+    const adj = scenario.incomeAdjustments.find((a) => a.sourceId === src.id)
+    return { ...src, isActive: adj !== undefined ? adj.active : src.isActive }
+  })
+  const scenarioAssumptions: FireAssumptions = {
+    ...assumptions,
+    annualExpenses: assumptions.annualExpenses + scenario.additionalAnnualExpense,
+  }
+  return computeFireResult(assets, scenarioIncome, scenarioAssumptions)
 }
 
 export function computeFireResult(

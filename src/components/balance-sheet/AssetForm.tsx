@@ -4,6 +4,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
+import { INVESTMENT_SUBCATEGORIES, RETIREMENT_SUBCATEGORIES } from '@/constants'
 
 const CATEGORY_OPTIONS = [
   { value: 'real_estate', label: 'Real Estate' },
@@ -11,6 +12,19 @@ const CATEGORY_OPTIONS = [
   { value: 'retirement', label: 'Retirement' },
   { value: 'cash_alternatives', label: 'Cash & Alternatives' },
 ]
+
+const LIQUID_DEFAULTS: Record<AssetCategory, boolean> = {
+  real_estate: false,
+  investments: true,
+  retirement: false,
+  cash_alternatives: true,
+}
+
+function subcategoryOptions(category: AssetCategory) {
+  if (category === 'investments') return [{ value: '', label: '— Select type —' }, ...INVESTMENT_SUBCATEGORIES]
+  if (category === 'retirement') return [{ value: '', label: '— Select type —' }, ...RETIREMENT_SUBCATEGORIES]
+  return null
+}
 
 interface FormState {
   name: string
@@ -24,6 +38,10 @@ interface FormState {
 type FormAction = { field: keyof FormState; value: string | boolean }
 
 function reducer(state: FormState, action: FormAction): FormState {
+  if (action.field === 'category') {
+    const cat = action.value as AssetCategory
+    return { ...state, category: cat, subcategory: '', isLiquid: LIQUID_DEFAULTS[cat] }
+  }
   return { ...state, [action.field]: action.value }
 }
 
@@ -66,15 +84,19 @@ export function AssetForm({ open, onClose, onSave, existing }: AssetFormProps) {
     onClose()
   }
 
+  const subOpts = subcategoryOptions(form.category)
+
   return (
     <Modal open={open} onClose={onClose} title={existing ? 'Edit Asset' : 'Add Asset'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input label="Asset Name" value={form.name} onChange={set('name')} placeholder="e.g. Fidelity Brokerage" required />
-        <div className="grid grid-cols-2 gap-4">
-          <Select label="Category" value={form.category} onChange={set('category')} options={CATEGORY_OPTIONS} />
-          <Input label="Subcategory (optional)" value={form.subcategory} onChange={set('subcategory')} placeholder="e.g. ETF" />
-        </div>
-        <Input label="Current Value ($)" value={form.value} onChange={set('value')} type="number" min="0" step="1" prefix="$" required />
+        <Select label="Category" value={form.category} onChange={set('category')} options={CATEGORY_OPTIONS} />
+        {subOpts ? (
+          <Select label="Type / Sub-category" value={form.subcategory} onChange={set('subcategory')} options={subOpts} />
+        ) : (
+          <Input label="Sub-category (optional)" value={form.subcategory} onChange={set('subcategory')} placeholder="e.g. Vacation Property" />
+        )}
+        <Input label="Current Value" type="number" min="0" step="1" value={form.value} onChange={set('value')} prefix="$" required />
         <Input label="Notes (optional)" value={form.notes} onChange={set('notes')} placeholder="Any notes" />
         <label className="flex items-center gap-2 cursor-pointer">
           <input

@@ -1,13 +1,16 @@
+import { useState } from 'react'
 import { useFinancial } from '@/context/FinancialContext'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
 import { FireTimeline } from '@/components/charts/FireTimeline'
+import { ScenarioForm } from '@/components/fire/ScenarioForm'
 import { formatCurrency, formatPercent } from '@/lib/utils'
-import { annualizeIncome } from '@/lib/calculations'
+import { annualizeIncome, computeScenarioFireResult } from '@/lib/calculations'
 import { INCOME_LABELS, INCOME_COLORS } from '@/constants'
-import type { FireVariantResult, CoastFireResult } from '@/types'
+import type { FireVariantResult, CoastFireResult, Scenario, FireResult } from '@/types'
 
 interface FireCardProps {
   label: string
@@ -79,8 +82,82 @@ function FireCard({ label, variant, result, coastResult, description }: FireCard
   )
 }
 
+interface ScenarioCardProps {
+  scenario: Scenario
+  result: FireResult
+  baseResult: FireResult
+  onEdit: () => void
+  onDelete: () => void
+}
+
+function ScenarioCard({ scenario, result, baseResult, onEdit, onDelete }: ScenarioCardProps) {
+  const yearsDelta = result.regularFire.yearsToFire - baseResult.regularFire.yearsToFire
+  const savingsDelta = result.effectiveAnnualSavings - baseResult.effectiveAnnualSavings
+  const expenseDelta = result.effectiveAnnualExpenses - baseResult.effectiveAnnualExpenses
+
+  return (
+    <Card className="flex flex-col gap-3">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: scenario.color }} />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-slate-800 truncate">{scenario.name}</p>
+            {scenario.description && (
+              <p className="text-xs text-slate-400 truncate">{scenario.description}</p>
+            )}
+          </div>
+        </div>
+        <div className="flex gap-1 shrink-0">
+          <button onClick={onEdit} className="text-xs text-slate-400 hover:text-indigo-600 px-1.5 py-0.5 rounded transition-colors">Edit</button>
+          <button onClick={onDelete} className="text-xs text-slate-400 hover:text-rose-600 px-1.5 py-0.5 rounded transition-colors">Delete</button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="bg-slate-50 rounded-lg p-2">
+          <p className="text-xs text-slate-500 mb-0.5">Regular FIRE</p>
+          <p className="text-base font-bold text-indigo-700">{formatCurrency(result.regularFire.target, true)}</p>
+        </div>
+        <div className="bg-slate-50 rounded-lg p-2">
+          <p className="text-xs text-slate-500 mb-0.5">Years Away</p>
+          <p className={`text-base font-bold ${yearsDelta > 2 ? 'text-rose-700' : yearsDelta < -2 ? 'text-emerald-700' : 'text-slate-700'}`}>
+            {result.regularFire.yearsToFire === Infinity ? '∞' : result.regularFire.yearsToFire.toFixed(1)}
+            <span className="text-xs font-normal text-slate-400 ml-0.5">yr</span>
+          </p>
+        </div>
+        <div className="bg-slate-50 rounded-lg p-2">
+          <p className="text-xs text-slate-500 mb-0.5">vs Baseline</p>
+          <p className={`text-base font-bold ${yearsDelta > 0 ? 'text-rose-600' : yearsDelta < 0 ? 'text-emerald-600' : 'text-slate-500'}`}>
+            {yearsDelta === 0 ? '—' : `${yearsDelta > 0 ? '+' : ''}${yearsDelta.toFixed(1)}yr`}
+          </p>
+        </div>
+      </div>
+
+      <ProgressBar value={result.regularFire.progress} color="indigo" size="sm" />
+
+      <div className="grid grid-cols-2 gap-2 text-xs text-slate-500">
+        <div>
+          <span>Savings: </span>
+          <span className={`font-semibold ${savingsDelta < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+            {formatCurrency(result.effectiveAnnualSavings, true)}
+            {savingsDelta !== 0 && ` (${savingsDelta > 0 ? '+' : ''}${formatCurrency(savingsDelta, true)})`}
+          </span>
+        </div>
+        <div>
+          <span>Expenses: </span>
+          <span className={`font-semibold ${expenseDelta > 0 ? 'text-rose-600' : 'text-slate-700'}`}>
+            {formatCurrency(result.effectiveAnnualExpenses, true)}
+            {expenseDelta !== 0 && ` (+${formatCurrency(expenseDelta, true)})`}
+          </span>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
 export function Fire() {
-  const { assumptions, updateAssumptions, fireResult, assets, income, totalAnnualIncome } = useFinancial()
+  const { assumptions, updateAssumptions, fireResult, assets, income, totalAnnualIncome, scenarios, addScenario, updateScenario, deleteScenario } = useFinancial()
+  const [scenarioModal, setScenarioModal] = useState<{ open: boolean; existing?: Scenario }>({ open: false })
 
   const handleNum = (field: keyof typeof assumptions) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value)
@@ -415,6 +492,135 @@ export function Fire() {
           <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-amber-500 inline-block" /> Fat FIRE ({formatCurrency(fireResult.fatFire.target, true)})</span>
         </div>
       </Card>
+
+      {/* What-If Scenarios */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="text-base font-semibold text-slate-700">What-If Scenarios</h2>
+            <p className="text-xs text-slate-400 mt-0.5">Simulate income changes or extra expenses to compare FIRE timelines</p>
+          </div>
+          <Button variant="secondary" onClick={() => setScenarioModal({ open: true, existing: undefined })}>
+            + Add Scenario
+          </Button>
+        </div>
+
+        {scenarios.length === 0 ? (
+          <Card className="text-center py-8">
+            <p className="text-slate-400 text-sm mb-3">No scenarios yet.</p>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              Create a scenario to model situations like a partner layoff, career break, or major life expense — and instantly see how it shifts your FIRE timeline.
+            </p>
+            <button
+              onClick={() => setScenarioModal({ open: true, existing: undefined })}
+              className="mt-4 text-sm text-indigo-600 font-medium hover:underline"
+            >
+              Create your first scenario →
+            </button>
+          </Card>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {scenarios.map((scenario) => {
+                const result = computeScenarioFireResult(assets, income, assumptions, scenario)
+                return (
+                  <ScenarioCard
+                    key={scenario.id}
+                    scenario={scenario}
+                    result={result}
+                    baseResult={fireResult}
+                    onEdit={() => setScenarioModal({ open: true, existing: scenario })}
+                    onDelete={() => deleteScenario(scenario.id)}
+                  />
+                )
+              })}
+            </div>
+
+            {/* Comparison table */}
+            <Card className="mt-4 overflow-x-auto">
+              <CardHeader>
+                <CardTitle>Side-by-Side Comparison</CardTitle>
+              </CardHeader>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100">
+                    <th className="text-left text-xs font-medium text-slate-500 py-2 pr-3 w-32">FIRE Target</th>
+                    <th className="text-right text-xs font-medium text-slate-700 py-2 px-3 whitespace-nowrap">Baseline</th>
+                    {scenarios.map((s) => (
+                      <th key={s.id} className="text-right text-xs font-medium py-2 px-3 whitespace-nowrap" style={{ color: s.color }}>
+                        {s.name}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(['leanFire', 'regularFire', 'fatFire'] as const).map((key) => {
+                    const labels = { leanFire: 'Lean FIRE', regularFire: 'Regular FIRE', fatFire: 'Fat FIRE' }
+                    const baseYears = fireResult[key].yearsToFire
+                    return (
+                      <tr key={key} className="border-b border-slate-50">
+                        <td className="py-2.5 pr-3 text-xs font-medium text-slate-600">{labels[key]}</td>
+                        <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                          <span className="font-semibold text-slate-800">
+                            {baseYears === Infinity ? '∞' : `${baseYears.toFixed(1)} yr`}
+                          </span>
+                          <span className="text-xs text-slate-400 ml-1.5">{formatCurrency(fireResult[key].target, true)}</span>
+                        </td>
+                        {scenarios.map((s) => {
+                          const result = computeScenarioFireResult(assets, income, assumptions, s)
+                          const yrs = result[key].yearsToFire
+                          const delta = yrs - baseYears
+                          return (
+                            <td key={s.id} className="py-2.5 px-3 text-right whitespace-nowrap">
+                              <span className={`font-semibold ${delta > 2 ? 'text-rose-600' : delta < -2 ? 'text-emerald-600' : 'text-slate-800'}`}>
+                                {yrs === Infinity ? '∞' : `${yrs.toFixed(1)} yr`}
+                              </span>
+                              {delta !== 0 && baseYears !== Infinity && (
+                                <span className={`text-xs ml-1.5 ${delta > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                                  ({delta > 0 ? '+' : ''}{delta.toFixed(1)})
+                                </span>
+                              )}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    )
+                  })}
+                  <tr className="border-b border-slate-50">
+                    <td className="py-2.5 pr-3 text-xs font-medium text-slate-600">Annual Savings</td>
+                    <td className="py-2.5 px-3 text-right text-sm font-semibold text-emerald-700 whitespace-nowrap">
+                      {formatCurrency(fireResult.effectiveAnnualSavings, true)}
+                    </td>
+                    {scenarios.map((s) => {
+                      const result = computeScenarioFireResult(assets, income, assumptions, s)
+                      return (
+                        <td key={s.id} className={`py-2.5 px-3 text-right text-sm font-semibold whitespace-nowrap ${result.effectiveAnnualSavings < fireResult.effectiveAnnualSavings ? 'text-rose-600' : 'text-emerald-600'}`}>
+                          {formatCurrency(result.effectiveAnnualSavings, true)}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                </tbody>
+              </table>
+            </Card>
+          </>
+        )}
+      </div>
+
+      <ScenarioForm
+        key={scenarioModal.existing?.id ?? 'new-scenario'}
+        open={scenarioModal.open}
+        onClose={() => setScenarioModal({ open: false, existing: undefined })}
+        onSave={(data) => {
+          if (scenarioModal.existing) {
+            updateScenario(scenarioModal.existing.id, data)
+          } else {
+            addScenario(data)
+          }
+        }}
+        income={income}
+        existing={scenarioModal.existing}
+      />
     </div>
   )
 }

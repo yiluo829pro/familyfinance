@@ -3,11 +3,9 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { StatCard } from '@/components/ui/StatCard'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { Button } from '@/components/ui/Button'
-import { AllocationDonut } from '@/components/charts/AllocationDonut'
 import { NetWorthLine } from '@/components/charts/NetWorthLine'
 import { formatCurrency, formatPercent } from '@/lib/utils'
-import { CATEGORY_LABELS, DEMO_ASSETS, DEMO_LIABILITIES, DEMO_SNAPSHOTS, DEMO_INCOME } from '@/constants'
-import type { AssetCategory } from '@/types'
+import { DEMO_ASSETS, DEMO_LIABILITIES, DEMO_SNAPSHOTS, DEMO_INCOME } from '@/constants'
 
 export function Dashboard() {
   const { assets, liabilities, income, snapshots, netWorth, totalAssets, totalLiabilities, totalAnnualIncome, fireResult, loadDemoData } =
@@ -15,19 +13,10 @@ export function Dashboard() {
 
   const isEmpty = assets.length === 0 && liabilities.length === 0 && income.length === 0
 
-  // Build allocation data grouped by category
-  const allocationData = Object.entries(
-    assets.reduce<Record<string, number>>((acc, a) => {
-      acc[a.category] = (acc[a.category] ?? 0) + a.value
-      return acc
-    }, {}),
-  ).map(([category, value]) => ({ category, value }))
-
-  // Net worth delta vs previous snapshot
   const prevSnapshot = snapshots.length >= 2 ? snapshots[snapshots.length - 2] : null
   const delta = prevSnapshot ? netWorth - prevSnapshot.netWorth : null
 
-  const { regularFire } = fireResult
+  const { regularFire, leanFire, fatFire } = fireResult
 
   if (isEmpty) {
     return (
@@ -40,7 +29,7 @@ export function Dashboard() {
         <div>
           <h2 className="text-xl font-bold text-slate-800 mb-2">Welcome to FamilyFi</h2>
           <p className="text-slate-500 text-sm max-w-sm">
-            Track your family's net worth, asset allocation, and FIRE progress in one place.
+            Track your family's net worth, asset allocation, and FIRE progress — no spreadsheet needed.
           </p>
         </div>
         <div className="flex gap-3">
@@ -71,12 +60,18 @@ export function Dashboard() {
           </div>
           <div className="flex gap-6 sm:text-right">
             <div>
-              <p className="text-indigo-200 text-xs uppercase tracking-wide">Total Assets</p>
+              <p className="text-indigo-200 text-xs uppercase tracking-wide">Assets</p>
               <p className="text-xl font-semibold text-emerald-300">{formatCurrency(totalAssets)}</p>
             </div>
             <div>
-              <p className="text-indigo-200 text-xs uppercase tracking-wide">Total Liabilities</p>
+              <p className="text-indigo-200 text-xs uppercase tracking-wide">Liabilities</p>
               <p className="text-xl font-semibold text-rose-300">-{formatCurrency(totalLiabilities)}</p>
+            </div>
+            <div>
+              <p className="text-indigo-200 text-xs uppercase tracking-wide">Savings Rate</p>
+              <p className="text-xl font-semibold text-amber-300">
+                {fireResult.savingsRate > 0 ? formatPercent(fireResult.savingsRate) : '—'}
+              </p>
             </div>
           </div>
         </div>
@@ -90,9 +85,9 @@ export function Dashboard() {
           valueClassName="text-indigo-700"
         />
         <StatCard
-          label="Savings Rate"
-          value={fireResult.savingsRate > 0 ? formatPercent(fireResult.savingsRate) : '—'}
-          valueClassName={fireResult.savingsRate >= 0.2 ? 'text-emerald-700' : 'text-amber-700'}
+          label="Annual Savings"
+          value={fireResult.effectiveAnnualSavings > 0 ? formatCurrency(fireResult.effectiveAnnualSavings, true) : '—'}
+          valueClassName="text-emerald-700"
         />
         <StatCard
           label="FIRE Progress"
@@ -106,73 +101,44 @@ export function Dashboard() {
         />
       </div>
 
-      {/* FIRE Progress bar */}
+      {/* Net Worth History — full width, this is the dashboard's unique view */}
       <Card>
         <CardHeader>
-          <CardTitle>FIRE Progress (Regular — 4% SWR)</CardTitle>
-          <span className="text-sm text-slate-500">
-            {formatCurrency(fireResult.investableNetWorth)} / {formatCurrency(regularFire.target)}
-          </span>
+          <CardTitle>Net Worth History</CardTitle>
+          <a href="/balance-sheet" className="text-xs text-indigo-600 hover:underline">Add historical data →</a>
         </CardHeader>
-        <ProgressBar value={regularFire.progress} />
-        <p className="mt-2 text-xs text-slate-500">
-          Gap to fill: <span className="font-medium text-slate-700">{formatCurrency(regularFire.gap)}</span>
-          {' · '}
-          Annual expenses (incl. children): <span className="font-medium text-slate-700">{formatCurrency(fireResult.effectiveAnnualExpenses)}</span>
-        </p>
+        <NetWorthLine snapshots={snapshots} height={240} />
       </Card>
 
-      {/* Charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Asset Allocation</CardTitle>
-          </CardHeader>
-          {allocationData.length > 0 ? (
-            <AllocationDonut data={allocationData} />
-          ) : (
-            <p className="text-sm text-slate-400 py-8 text-center">No assets yet</p>
-          )}
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Net Worth History</CardTitle>
-          </CardHeader>
-          <NetWorthLine snapshots={snapshots} />
-        </Card>
-      </div>
-
-      {/* Asset category summary */}
-      {allocationData.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Assets by Category</CardTitle>
-          </CardHeader>
-          <div className="space-y-3">
-            {allocationData.map((item) => (
-              <div key={item.category} className="flex items-center gap-3">
-                <div className="w-20 text-xs text-slate-600 shrink-0">
-                  {CATEGORY_LABELS[item.category as AssetCategory]}
-                </div>
-                <div className="flex-1">
-                  <ProgressBar
-                    value={totalAssets > 0 ? item.value / totalAssets : 0}
-                    color="indigo"
-                    size="sm"
-                  />
-                </div>
-                <div className="w-24 text-right text-sm font-medium text-slate-700">
-                  {formatCurrency(item.value, true)}
-                </div>
-                <div className="w-12 text-right text-xs text-slate-400">
-                  {formatPercent(totalAssets > 0 ? item.value / totalAssets : 0, 0)}
+      {/* FIRE at a glance — unique to Dashboard, detail lives in FIRE tab */}
+      <Card>
+        <CardHeader>
+          <CardTitle>FIRE at a Glance</CardTitle>
+          <a href="/fire" className="text-xs text-indigo-600 hover:underline">Full analysis →</a>
+        </CardHeader>
+        <div className="space-y-4">
+          {[
+            { label: 'Lean FIRE', target: leanFire.target, progress: leanFire.progress, years: leanFire.yearsToFire, color: 'emerald' as const, barColor: 'emerald' as const },
+            { label: 'Regular FIRE', target: regularFire.target, progress: regularFire.progress, years: regularFire.yearsToFire, color: 'indigo' as const, barColor: 'indigo' as const },
+            { label: 'Fat FIRE', target: fatFire.target, progress: fatFire.progress, years: fatFire.yearsToFire, color: 'amber' as const, barColor: 'amber' as const },
+          ].map((row) => (
+            <div key={row.label} className="space-y-1.5">
+              <div className="flex justify-between text-sm">
+                <span className="font-medium text-slate-700">{row.label}</span>
+                <div className="flex gap-4 text-xs text-slate-500">
+                  <span>Target: <strong className="text-slate-700">{formatCurrency(row.target, true)}</strong></span>
+                  <span>{formatPercent(row.progress, 0)}</span>
+                  <span>{row.years === Infinity ? '∞' : `${row.years.toFixed(1)} yrs`}</span>
                 </div>
               </div>
-            ))}
-          </div>
-        </Card>
-      )}
+              <ProgressBar value={row.progress} color={row.barColor} size="sm" />
+            </div>
+          ))}
+          <p className="text-xs text-slate-400 pt-1">
+            Investable: {formatCurrency(fireResult.investableNetWorth, true)} · Saving {formatCurrency(fireResult.effectiveAnnualSavings, true)}/yr
+          </p>
+        </div>
+      </Card>
     </div>
   )
 }

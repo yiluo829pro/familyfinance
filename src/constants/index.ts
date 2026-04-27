@@ -6,10 +6,36 @@ export const STORAGE_KEYS = {
   INCOME: 'ff_income',
   ASSUMPTIONS: 'ff_assumptions',
   SNAPSHOTS: 'ff_snapshots',
+  SCENARIOS: 'ff_scenarios',
   SCHEMA_VERSION: 'ff_schema_version',
 } as const
 
-export const SCHEMA_VERSION = '2'
+export const SCHEMA_VERSION = '3'
+
+export const INVESTMENT_SUBCATEGORIES = [
+  { value: 'us_equity', label: 'US Stocks (General)' },
+  { value: 'tech', label: 'Tech Stocks' },
+  { value: 'etf', label: 'ETF / Index Fund' },
+  { value: 'international', label: 'International Stocks' },
+  { value: 'bonds', label: 'Bonds / Fixed Income' },
+  { value: 'crypto', label: 'Cryptocurrency' },
+  { value: 'reits', label: 'REITs' },
+  { value: 'options', label: 'Options / Derivatives' },
+  { value: 'other_inv', label: 'Other' },
+]
+
+export const RETIREMENT_SUBCATEGORIES = [
+  { value: '401k', label: '401(k)' },
+  { value: 'roth_401k', label: 'Roth 401(k)' },
+  { value: 'ira', label: 'Traditional IRA' },
+  { value: 'roth_ira', label: 'Roth IRA' },
+  { value: 'sep_ira', label: 'SEP IRA' },
+  { value: 'pension', label: 'Pension' },
+  { value: 'hsa', label: 'HSA' },
+  { value: 'other_ret', label: 'Other' },
+]
+
+export const SCENARIO_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#3b82f6']
 
 export const CATEGORY_COLORS: Record<string, string> = {
   real_estate: '#6366f1',

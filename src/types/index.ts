@@ -80,6 +80,21 @@ export interface ProjectionPoint {
   fatTarget: number
 }
 
+export interface IncomeAdjustment {
+  sourceId: string
+  active: boolean
+}
+
+export interface Scenario {
+  id: string
+  name: string
+  description?: string
+  color: string
+  incomeAdjustments: IncomeAdjustment[]
+  additionalAnnualExpense: number
+  annualSavingsOverride?: number
+}
+
 export interface FireResult {
   investableNetWorth: number
   effectiveAnnualExpenses: number

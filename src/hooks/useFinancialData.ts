@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import type { Asset, Liability, IncomeSource, FireAssumptions, NetWorthSnapshot } from '@/types'
+import type { Asset, Liability, IncomeSource, FireAssumptions, NetWorthSnapshot, Scenario } from '@/types'
 import { getFromStorage, setToStorage } from '@/lib/storage'
 import { generateId, today } from '@/lib/utils'
 import { STORAGE_KEYS, FIRE_DEFAULTS } from '@/constants'
@@ -31,6 +31,9 @@ export function useFinancialData() {
   )
   const [snapshots, setSnapshots] = useState<NetWorthSnapshot[]>(() =>
     getFromStorage<NetWorthSnapshot[]>(STORAGE_KEYS.SNAPSHOTS, []),
+  )
+  const [scenarios, setScenarios] = useState<Scenario[]>(() =>
+    getFromStorage<Scenario[]>(STORAGE_KEYS.SCENARIOS, []),
   )
 
   const addAsset = useCallback((data: Omit<Asset, 'id' | 'lastUpdated'>) => {
@@ -152,6 +155,48 @@ export function useFinancialData() {
     setToStorage(STORAGE_KEYS.ASSUMPTIONS, FIRE_DEFAULTS)
   }, [])
 
+  const addManualSnapshot = useCallback((date: string, totalAssets: number, totalLiabilities: number) => {
+    setSnapshots((prev) => {
+      const filtered = prev.filter((s) => s.date !== date)
+      const next = [...filtered, { date, totalAssets, totalLiabilities, netWorth: totalAssets - totalLiabilities }]
+        .sort((a, b) => a.date.localeCompare(b.date))
+      setToStorage(STORAGE_KEYS.SNAPSHOTS, next)
+      return next
+    })
+  }, [])
+
+  const deleteSnapshot = useCallback((date: string) => {
+    setSnapshots((prev) => {
+      const next = prev.filter((s) => s.date !== date)
+      setToStorage(STORAGE_KEYS.SNAPSHOTS, next)
+      return next
+    })
+  }, [])
+
+  const addScenario = useCallback((data: Omit<Scenario, 'id'>) => {
+    setScenarios((prev) => {
+      const next = [...prev, { ...data, id: generateId() }]
+      setToStorage(STORAGE_KEYS.SCENARIOS, next)
+      return next
+    })
+  }, [])
+
+  const updateScenario = useCallback((id: string, data: Partial<Omit<Scenario, 'id'>>) => {
+    setScenarios((prev) => {
+      const next = prev.map((s) => (s.id === id ? { ...s, ...data } : s))
+      setToStorage(STORAGE_KEYS.SCENARIOS, next)
+      return next
+    })
+  }, [])
+
+  const deleteScenario = useCallback((id: string) => {
+    setScenarios((prev) => {
+      const next = prev.filter((s) => s.id !== id)
+      setToStorage(STORAGE_KEYS.SCENARIOS, next)
+      return next
+    })
+  }, [])
+
   return {
     assets,
     liabilities,
@@ -168,6 +213,12 @@ export function useFinancialData() {
     updateIncome,
     deleteIncome,
     updateAssumptions,
+    addManualSnapshot,
+    deleteSnapshot,
+    scenarios,
+    addScenario,
+    updateScenario,
+    deleteScenario,
     loadDemoData,
     clearAllData,
   }

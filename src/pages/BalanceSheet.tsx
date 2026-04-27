@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/Badge'
 import { AssetForm } from '@/components/balance-sheet/AssetForm'
 import { LiabilityForm } from '@/components/balance-sheet/LiabilityForm'
 import { IncomeForm } from '@/components/balance-sheet/IncomeForm'
+import { SnapshotForm } from '@/components/balance-sheet/SnapshotForm'
+import { NetWorthLine } from '@/components/charts/NetWorthLine'
 import { formatCurrency, formatPercent } from '@/lib/utils'
 import {
   CATEGORY_LABELS, CATEGORY_COLORS, LIABILITY_LABELS,
@@ -42,16 +44,18 @@ function AssetTableRow({ asset, onEdit, onDelete }: { asset: Asset; onEdit: (a: 
 
 export function BalanceSheet() {
   const {
-    assets, liabilities, income, totalAssets, totalLiabilities, totalAnnualIncome, netWorth,
+    assets, liabilities, income, snapshots, totalAssets, totalLiabilities, totalAnnualIncome, netWorth,
     addAsset, updateAsset, deleteAsset,
     addLiability, updateLiability, deleteLiability,
     addIncome, updateIncome, deleteIncome,
+    addManualSnapshot, deleteSnapshot,
     loadDemoData, fireResult,
   } = useFinancial()
 
   const [assetModal, setAssetModal] = useState<{ open: boolean; existing?: Asset }>({ open: false })
   const [liabilityModal, setLiabilityModal] = useState<{ open: boolean; existing?: Liability }>({ open: false })
   const [incomeModal, setIncomeModal] = useState<{ open: boolean; existing?: IncomeSource }>({ open: false })
+  const [snapshotFormOpen, setSnapshotFormOpen] = useState(false)
 
   const isEmpty = assets.length === 0 && liabilities.length === 0 && income.length === 0
   const estimatedSavings = fireResult.effectiveAnnualSavings
@@ -245,6 +249,57 @@ export function BalanceSheet() {
         )}
       </div>
 
+      {/* Net Worth History */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Net Worth History</CardTitle>
+          <Button size="sm" variant="secondary" onClick={() => setSnapshotFormOpen(true)}>
+            + Add Past Snapshot
+          </Button>
+        </CardHeader>
+        <NetWorthLine snapshots={snapshots} height={200} />
+        {snapshots.length > 0 && (
+          <div className="mt-4 border-t border-slate-100 pt-4">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-100">
+                  <th className="text-left text-xs font-medium text-slate-500 py-2 w-full">Date</th>
+                  <th className="text-right text-xs font-medium text-slate-500 py-2 whitespace-nowrap px-4">Assets</th>
+                  <th className="text-right text-xs font-medium text-slate-500 py-2 whitespace-nowrap px-4">Liabilities</th>
+                  <th className="text-right text-xs font-medium text-slate-500 py-2 whitespace-nowrap px-4">Net Worth</th>
+                  <th className="w-12 py-2" />
+                </tr>
+              </thead>
+              <tbody>
+                {[...snapshots].reverse().map((s) => (
+                  <tr key={s.date} className="border-b border-slate-50 hover:bg-slate-50 group text-sm">
+                    <td className="py-2 text-slate-600">{s.date.slice(0, 7)}</td>
+                    <td className="py-2 px-4 text-right text-emerald-700">{formatCurrency(s.totalAssets, true)}</td>
+                    <td className="py-2 px-4 text-right text-rose-600">-{formatCurrency(s.totalLiabilities, true)}</td>
+                    <td className={`py-2 px-4 text-right font-semibold ${s.netWorth >= 0 ? 'text-slate-800' : 'text-rose-700'}`}>
+                      {formatCurrency(s.netWorth, true)}
+                    </td>
+                    <td className="py-2 text-right">
+                      <button
+                        onClick={() => deleteSnapshot(s.date)}
+                        className="text-xs text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                      >
+                        ✕
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {snapshots.length === 0 && (
+          <p className="text-sm text-slate-400 text-center py-6">
+            No history yet. Add past snapshots to see your net worth growth over time.
+          </p>
+        )}
+      </Card>
+
       {/* Modals — key forces remount so form state resets when switching items */}
       <IncomeForm
         key={incomeModal.existing?.id ?? 'new-income'}
@@ -266,6 +321,13 @@ export function BalanceSheet() {
         existing={liabilityModal.existing}
         onClose={() => setLiabilityModal({ open: false, existing: undefined })}
         onSave={liabilityModal.existing ? (data) => updateLiability(liabilityModal.existing!.id, data) : addLiability}
+      />
+      <SnapshotForm
+        open={snapshotFormOpen}
+        onClose={() => setSnapshotFormOpen(false)}
+        onSave={addManualSnapshot}
+        defaultAssets={totalAssets}
+        defaultLiabilities={totalLiabilities}
       />
     </div>
   )
