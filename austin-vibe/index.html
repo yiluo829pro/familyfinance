@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#0f0f0f"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<title>Austin Vibe</title>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --bg2: #1a1a1a;
+    --bg3: #242424;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0f0f0;
+    --text2: #999;
+    --text3: #666;
+    --orange: #e8571a;
+    --orange-dim: rgba(232,87,26,0.15);
+    --green: #2ecc71;
+    --green-dim: rgba(46,204,113,0.12);
+    --red: #e74c3c;
+    --red-dim: rgba(231,76,60,0.12);
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif; overscroll-behavior: none; }
+  body { overflow-x: hidden; }
+
+  /* HEADER */
+  .header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(15,15,15,0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 0.5px solid var(--border);
+    padding: 14px 18px 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .header-logo { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; flex: 1; }
+  .header-logo span { color: var(--orange); }
+  .back-btn {
+    background: var(--bg3); border: 0.5px solid var(--border2);
+    border-radius: 20px; padding: 6px 14px; font-size: 13px;
+    color: var(--text2); cursor: pointer; display: flex; align-items: center; gap: 5px;
+  }
+
+  /* HOME GRID */
+  .home-intro {
+    padding: 20px 18px 4px;
+  }
+  .home-headline { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.2; }
+  .home-sub { font-size: 14px; color: var(--text2); margin-top: 6px; line-height: 1.5; }
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 18px;
+  }
+  .cat-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 14px;
+    cursor: pointer;
+    transition: border-color .15s, transform .1s;
+    -webkit-user-select: none; user-select: none;
+  }
+  .cat-card:active { transform: scale(0.97); border-color: var(--border2); }
+  .cat-emoji { font-size: 28px; margin-bottom: 8px; display: block; }
+  .cat-name { font-size: 14px; font-weight: 600; line-height: 1.3; }
+  .cat-sub { font-size: 11px; color: var(--text3); margin-top: 3px; line-height: 1.35; }
+  .cat-count { font-size: 11px; color: var(--orange); margin-top: 6px; font-weight: 500; }
+
+  /* LIST VIEW */
+  .list-view { display: none; }
+  .list-header {
+    padding: 16px 18px 12px;
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  .list-title-wrap {}
+  .list-title { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  .list-sub { font-size: 13px; color: var(--text2); margin-top: 3px; }
+  .share-btn {
+    background: var(--orange-dim);
+    border: 0.5px solid var(--orange);
+    border-radius: 20px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--orange);
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex; align-items: center; gap: 5px;
+    flex-shrink: 0;
+  }
+  .share-btn:active { opacity: 0.7; }
+
+  /* PLACE CARDS */
+  .places-list { padding: 0 12px; }
+  .place-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 12px;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .place-rank {
+    font-size: 18px; font-weight: 700; color: var(--text3);
+    min-width: 28px; text-align: center; flex-shrink: 0;
+  }
+  .place-rank.gold { color: #f5a623; }
+  .place-rank.silver { color: #aaaaaa; }
+  .place-rank.bronze { color: #cd7f32; }
+  .place-info { flex: 1; min-width: 0; }
+  .place-name {
+    font-size: 15px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .place-desc {
+    font-size: 12px; color: var(--text2); margin-top: 3px;
+    line-height: 1.4; display: -webkit-box;
+    -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .place-addr { font-size: 11px; color: var(--text3); margin-top: 3px; }
+  .place-tags { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+  .place-tag {
+    font-size: 10px; background: var(--bg3); color: var(--text3);
+    padding: 2px 7px; border-radius: 20px; border: 0.5px solid var(--border);
+  }
+  .community-badge {
+    font-size: 10px; background: rgba(232,87,26,0.12); color: var(--orange);
+    padding: 1px 6px; border-radius: 10px; margin-left: 6px; vertical-align: middle;
+  }
+
+  /* VOTE CONTROLS */
+  .vote-col { display: flex; flex-direction: column; align-items: center; gap: 2px; flex-shrink: 0; }
+  .vote-btn {
+    width: 36px; height: 32px;
+    background: var(--bg3); border: 0.5px solid var(--border);
+    border-radius: 8px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: var(--text2);
+    transition: all .12s;
+  }
+  .vote-btn:active { transform: scale(0.92); }
+  .vote-btn.up-voted { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+  .vote-btn.dn-voted { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+  .vote-score {
+    font-size: 13px; font-weight: 700; color: var(--text);
+    min-width: 36px; text-align: center; line-height: 1;
+  }
+  .vote-score.positive { color: var(--green); }
+  .vote-score.negative { color: var(--red); }
+
+  /* EXPAND + NOMINATE */
+  .expand-row { text-align: center; padding: 10px 0 4px; }
+  .expand-btn {
+    background: var(--bg2); border: 0.5px solid var(--border2);
+    border-radius: 20px; padding: 9px 22px;
+    font-size: 13px; color: var(--text2); cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .expand-btn:active { opacity: 0.7; }
+  .expand-arrow { transition: transform .2s; display: inline-block; }
+  .expand-arrow.open { transform: rotate(180deg); }
+
+  .nominate-box {
+    margin: 16px 12px 24px;
+    background: var(--bg2);
+    border: 0.5px dashed var(--border2);
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+  .nom-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .nom-sub { font-size: 12px; color: var(--text3); margin-bottom: 10px; }
+  .nom-inputs { display: flex; flex-direction: column; gap: 8px; }
+  .nom-input {
+    background: var(--bg3); border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm); padding: 10px 12px;
+    font-size: 14px; color: var(--text); width: 100%;
+    outline: none;
+  }
+  .nom-input:focus { border-color: var(--orange); }
+  .nom-input::placeholder { color: var(--text3); }
+  .nom-row { display: flex; gap: 8px; }
+  .nom-submit {
+    background: var(--orange); border: none;
+    border-radius: var(--radius-sm); padding: 10px 16px;
+    font-size: 14px; font-weight: 600; color: white; cursor: pointer;
+    flex-shrink: 0;
+  }
+  .nom-submit:active { opacity: 0.8; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: rgba(30,30,30,0.95); border: 0.5px solid var(--border2);
+    border-radius: 20px; padding: 10px 20px;
+    font-size: 13px; font-weight: 500; color: var(--text);
+    opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 999;
+    white-space: nowrap; max-width: 90vw;
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  }
+  .toast.show { opacity: 1; }
+
+  /* PENDING DIMMED */
+  .pending-place { opacity: 0.65; }
+
+  /* SECTION DIVIDER */
+  .section-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--text3);
+    padding: 10px 18px 6px;
+  }
+
+  /* NO SCROLL BOUNCE ON IOS */
+  @supports (-webkit-overflow-scrolling: touch) {
+    body { -webkit-overflow-scrolling: touch; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- HEADER -->
+  <div class="header" id="app-header">
+    <div class="header-logo">Austin <span>Vibe</span></div>
+  </div>
+
+  <!-- HOME VIEW -->
+  <div id="home-view">
+    <div class="home-intro">
+      <div class="home-headline">Where's the<br>move tonight? 🔥</div>
+      <div class="home-sub">Community-ranked Austin spots. Tap a vibe, vote up your picks, share with the group chat.</div>
+    </div>
+    <div class="cat-grid" id="cat-grid"></div>
+  </div>
+
+  <!-- LIST VIEW -->
+  <div id="list-view" class="list-view">
+    <div class="list-header">
+      <div class="list-title-wrap">
+        <div class="list-title" id="list-title"></div>
+        <div class="list-sub" id="list-sub"></div>
+      </div>
+      <button class="share-btn" id="share-btn" onclick="shareList()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Share
+      </button>
+    </div>
+    <div class="places-list" id="places-list"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CATS = [
+  {id:'tequila', emoji:'🍹', name:'Tequila Night', sub:'Margaritas, mezcal & agave fire'},
+  {id:'speakeasy', emoji:'🕵️', name:'Speakeasy Hunt', sub:'Hidden bars, secret doors, password vibes'},
+  {id:'rooftop', emoji:'🌆', name:'Rooftop Season', sub:'Best views, golden hour, city skyline'},
+  {id:'bachelorette', emoji:'👑', name:'Bachelorette ATX', sub:'Drag brunch, bougie bars, the send-off'},
+  {id:'boysnite', emoji:'🎱', name:"Boys Night Out", sub:'Sports, pool tables, no-frills fun'},
+  {id:'girlsnite', emoji:'🥂', name:"Girls Night Out", sub:'Cocktails, dancing, dress-up energy'},
+  {id:'bigw', emoji:'🏆', name:'Big W Energy', sub:'Promotion, new job, raise, graduation'},
+  {id:'firstdate', emoji:'💛', name:'First Date', sub:'Impressive but not too try-hard'},
+  {id:'whiskey', emoji:'🥃', name:'Whiskey & Bourbon', sub:'Serious pours, old fashioned culture'},
+  {id:'latenight', emoji:'🌙', name:'Late Night Eats', sub:"Where to go at 1am after the bars"},
+  {id:'focusmode', emoji:'☕', name:'Focus Mode', sub:'Deep work, wifi, power outlets, quiet'},
+  {id:'sundayreset', emoji:'🍳', name:'Sunday Reset', sub:'Slow brunch, no rush, Bloody Marys'},
+];
+
+const PLACES = {
+  tequila:[
+    {id:'las-perlas',name:"Las Perlas",desc:"Let Pablo take you on an agave spirit ride — the best tequila bar in Austin",addr:"405 E 7th St",tags:['tequila','mezcal','tacos'],score:47},
+    {id:'techo-mez',name:"Techo Mezcalería",desc:"James Beard–awarded rooftop. Not one miss on the cocktail menu",addr:"2201 Manor Rd",tags:['mezcal','rooftop','craft'],score:41},
+    {id:'la-mezca',name:"La Mezca",desc:"Speakeasy-vibed mezcal bar in Mueller. Flor de Fuego is the move",addr:"1905 Aldrich St",tags:['mezcal','craft','intimate'],score:38},
+    {id:'la-holly',name:"La Holly",desc:"Ask for the jalapeño margarita. It's actually spicy.",addr:"2500 E 6th St",tags:['tequila','cocktails','eastside'],score:29},
+    {id:'mez-tobala',name:"Mezcalería Tobalá",desc:"Mezcal ONLY, above Whisler's. Tiny, smoky, perfect.",addr:"1816 E 6th St",tags:['mezcal','intimate'],score:24},
+    {id:'whislers',name:"Whisler's",desc:"East 6th classic. Mezcal lounge upstairs is the secret weapon.",addr:"1816 E 6th St",tags:['cocktails','mezcal','patio'],score:18},
+    {id:'bar508',name:"Bar 508",desc:"Bartender makes custom drinks — tell them what you like",addr:"508 E 8th St",tags:['tequila','intimate'],score:12},
+    {id:'milonga',name:"Milonga Room",desc:"Amaro-forward drinks, prohibition-era decor, empanadas upstairs",addr:"1201 E 6th St",tags:['amaro','craft','intimate'],score:9},
+  ],
+  speakeasy:[
+    {id:'midnight-cowboy',name:"Midnight Cowboy",desc:"Reservation + secret entrance code. Austin's most iconic speakeasy.",addr:"313 E 6th St",tags:['reservation','craft','intimate'],score:62},
+    {id:'here-nor-there',name:"Here Nor There",desc:"World-class cocktails. The staff reads the room and delivers.",addr:"612 Brazos St",tags:['craft','romantic','cocktails'],score:54},
+    {id:'powder-room',name:"Powder Room",desc:"Phone-free, hidden entrance, drop-dead gorgeous interior",addr:"301 W 5th St",tags:['secret','luxury','no-phones'],score:49},
+    {id:'firehouse',name:"Firehouse Lounge",desc:"Enter through a bookcase inside a hostel. Works every time.",addr:"605 Brazos St",tags:['bookcase','hidden','downtown'],score:43},
+    {id:'kinfolk',name:"Kinfolk Cocktail Lounge",desc:"Gated cellar entrance via Moonshine. Serious spirits library.",addr:"303 Red River St",tags:['cellar','spirits','intimate'],score:37},
+    {id:'small-victory',name:"Small Victory",desc:"Austin's best martini. The 75¢ Wednesday special is legendary.",addr:"108 E 7th St",tags:['martini','speakeasy','downtown'],score:31},
+    {id:'prohibition-atx',name:"Prohibition ATX",desc:"Pull the right book off the shelf. Seriously.",addr:"9112 Anderson Mill Rd",tags:['northaustin','secret','date'],score:22},
+    {id:'dumont',name:"DuMont's Down Low",desc:"Basement speakeasy on W4th. Underground feel, zero pretension.",addr:"214 W 4th St",tags:['basement','lounge','cocktails'],score:17},
+    {id:'la-mezca-sp',name:"La Mezca",desc:"Dark, intimate, speakeasy vibes in Mueller. Feels like a secret.",addr:"1905 Aldrich St",tags:['mezcal','secret','mueller'],score:14},
+  ],
+  rooftop:[
+    {id:'edge-rooftop',name:"Edge Rooftop",desc:"4.9 stars. The skyline hits different from up here. Non-negotiable.",addr:"110 E 2nd St",tags:['views','skyline','downtown'],score:71},
+    {id:'zanzibar',name:"Zanzibar",desc:"Tropical 7th-floor rooftop at the Marriott. Perfect catch-up spot.",addr:"304 E Cesar Chavez",tags:['tropical','views','hotel'],score:55},
+    {id:'azul',name:"Azul Rooftop",desc:"Highest rooftop bar downtown. Honeydew agua fresca + tequila = done.",addr:"310 E 5th St",tags:['views','cocktails','upscale'],score:48},
+    {id:'upstairs-caroline',name:"Upstairs at Caroline",desc:"Pool tables, Jenga, foosball, firepit, views. Stays till midnight.",addr:"109 E 7th St",tags:['games','fun','views'],score:39},
+    {id:'otopia',name:"Otopia Rooftop Lounge",desc:"Mueller's rooftop gem. An Austin native on staff knows every secret.",addr:"1901 San Antonio St",tags:['mueller','intimate','views'],score:28},
+    {id:'nido',name:"Nido at Loren Hotel",desc:"Rooftop over Lady Bird Lake. Valentine's-worthy at any time.",addr:"1211 W Riverside Dr",tags:['romantic','dinner','lake'],score:21},
+    {id:'luna-rooftop',name:"LUNA Rooftop",desc:"Reggaeton nights and strong drinks. Hispanic-owned. BEST VIBES.",addr:"120 W 5th St",tags:['dancing','rooftop','nightclub'],score:16},
+    {id:'77-rooftop',name:"77° Rooftop",desc:"The Domain's patio scene. Hookah, cabanas, top-40 crowd.",addr:"11500 Rock Rose Ave",tags:['domain','patio','hookah'],score:11},
+  ],
+  bachelorette:[
+    {id:'cheer-up-charlies',name:"Cheer Up Charlie's",desc:"Drag shows, 90s Western nights, massive patio. True Austin send-off.",addr:"900 Red River St",tags:['drag','queer','patio'],score:58},
+    {id:'oilcan',name:"Oilcan Harry's",desc:"Drag performers every single day — not just weekends. Legendary.",addr:"211 W 4th St",tags:['drag','dancing','inclusive'],score:49},
+    {id:'coconut-club',name:"Coconut Club",desc:"Rooftop, multiple levels, vibes for photos and dancing.",addr:"310B Colorado St",tags:['rooftop','dancing','bachelorette'],score:41},
+    {id:'volstead-drag',name:"Volstead — Drag Brunch",desc:"Meant to stay an hour, ended up there for 4. Mimosa pitchers.",addr:"1500 E 6th St",tags:['drag','brunch','eastside'],score:35},
+    {id:'wanderlust',name:"Wanderlust Wine Co.",desc:"Drag Brunch Sundays. Bring dollar bills for the queens.",addr:"702 Shady Ln",tags:['drag','wine','brunch'],score:27},
+    {id:'extragrams',name:"Extragrams! Drag Telegrams",desc:"Book drag queens to come to YOU. The surprise element is undefeated.",addr:"41 Waller St",tags:['drag','private','surprise'],score:22},
+    {id:'powder-room-b',name:"Powder Room",desc:"Phone-free, hidden entrance. Perfect for a dressy group moment.",addr:"301 W 5th St",tags:['luxury','photos','intimate'],score:18},
+  ],
+  boysnite:[
+    {id:'champions',name:"Champions Austin",desc:"Dry rub wings 10/10. Nachos are a must-order. Kolt takes care of you.",addr:"300 E 4th St",tags:['sports','wings','downtown'],score:44},
+    {id:'lavaca',name:"Lavaca Street Bar",desc:"Tons of TVs, downtown institution. Cold beers, lively crowd.",addr:"405 Lavaca St",tags:['sports','downtown','beers'],score:38},
+    {id:'little-woodrows',name:"Little Woodrow's W6th",desc:"Fire pit, huge patio, great music, One Taco food truck on site.",addr:"520 W 6th St",tags:['patio','food','sports'],score:33},
+    {id:'black-sheep',name:"Black Sheep Lodge",desc:"Sound on for all games. South Lamar neighborhood classic.",addr:"2108 S Lamar",tags:['southaustin','sports','wings'],score:27},
+    {id:'seven-grand',name:"Seven Grand",desc:"3 pool tables, cigars on the patio, whiskey specialties. Crew approved.",addr:"405 E 7th St",tags:['pool','cigars','whiskey'],score:21},
+    {id:'bbgs',name:"BBG's",desc:"Come for the fight night, stay for the fried chicken. No pretension.",addr:"214 E 6th St",tags:['sports','wings','downtown'],score:15},
+    {id:'crown-anchor',name:"Crown & Anchor Pub",desc:"Local hangout that refused to become corporate Austin. Long may it reign.",addr:"2911 San Jacinto",tags:['pub','local','beer'],score:11},
+    {id:'tavern',name:"The Tavern",desc:"Haunted, historic, great wings. Arsenal soccer watch parties on point.",addr:"922 W 12th St",tags:['pub','sports','historic'],score:8},
+  ],
+  girlsnite:[
+    {id:'powder-room-g',name:"Powder Room",desc:"Hidden entrance, phone-free, gorgeous crowd. Elevated and fun.",addr:"301 W 5th St",tags:['luxury','secret','dressy'],score:61},
+    {id:'here-nor-there-g',name:"Here Nor There",desc:"Music curation perfect for conversation AND dancing. Not too loud.",addr:"612 Brazos St",tags:['craft','intimate','cocktails'],score:47},
+    {id:'luna-g',name:"LUNA Rooftop",desc:"Reggaeton night. Strong drinks. Every friend group's perfect Friday.",addr:"120 W 5th St",tags:['dancing','rooftop','latina'],score:39},
+    {id:'azul-g',name:"Azul Rooftop",desc:"Pool, highest rooftop downtown. The photos are worth it.",addr:"310 E 5th St",tags:['photos','views','upscale'],score:32},
+    {id:'roosevelt',name:"The Roosevelt Room",desc:"Cocktails by era. Dark, moody, impressive. Let Lawrence guide you.",addr:"307 W 5th St",tags:['cocktails','dark','crafty'],score:26},
+    {id:'cheer-up-g',name:"Cheer Up Charlie's",desc:"Drag, dancing, safe space, gorgeous patio. Gay Cheers of Austin.",addr:"900 Red River St",tags:['drag','patio','queer'],score:19},
+    {id:'milonga-g',name:"Milonga Room",desc:"Blind double date approved. Cocktails, empanadas, tango playlist.",addr:"1201 E 6th St",tags:['amaro','intimate','date'],score:14},
+  ],
+  bigw:[
+    {id:'hestia',name:"Hestia",desc:"Michelin Star. Wood-fired everything. The dinner you deserve after a W.",addr:"607 W 3rd St",tags:['michelin','finedining','special'],score:66},
+    {id:'ember',name:"Ember Kitchen",desc:"Chef's counter seats available. Latin-forward, unforgettable flavors.",addr:"800 W Cesar Chavez",tags:['special','latin','romantic'],score:52},
+    {id:'geraldines',name:"Geraldine's",desc:"Live music, craft cocktails, al pastor that ruins all other al pastor.",addr:"605 Davis St",tags:['livemusic','celebration','upscale'],score:44},
+    {id:'lutie',name:"Lutie's at Commodore Perry",desc:"Estate dining. Texifornia vibes. Eight-dish chef walk is the move.",addr:"4100 Red River St",tags:['estate','luxury','garden'],score:37},
+    {id:'aba',name:"Aba Austin",desc:"Mediterranean, beautiful, South Congress. Perfect for the whole crew.",addr:"1011 S Congress Ave",tags:['mediterranean','group','celebration'],score:29},
+    {id:'corinne',name:"Corinne Austin",desc:"Buffalo cauliflower, mushroom bolognese, wagyu. Elegant hotel dining.",addr:"304 E Cesar Chavez",tags:['hotel','elegant','anniversary'],score:23},
+    {id:'nido-bigw',name:"Nido at Loren Hotel",desc:"Rooftop over Lady Bird Lake. Complimentary birthday bubbly.",addr:"1211 W Riverside",tags:['rooftop','romantic','lake'],score:17},
+  ],
+  firstdate:[
+    {id:'here-nor-there-fd',name:"Here Nor There",desc:"Romantic, not too loud, staff makes everyone feel celebrated.",addr:"612 Brazos St",tags:['intimate','craft','conversation'],score:58},
+    {id:'midnight-cowboy-fd',name:"Midnight Cowboy",desc:"Secret code, reservation required. Instantly impressive.",addr:"313 E 6th St",tags:['speakeasy','romantic','craft'],score:50},
+    {id:'josephine-house',name:"Josephine House",desc:"Garden patio cottage in Hyde Park. No try-hard energy, all taste.",addr:"1601 Waterston Ave",tags:['garden','romantic','lunch'],score:43},
+    {id:'hillside-farmacy',name:"Hillside Farmacy",desc:"Converted pharmacy. Bistro-style, espresso martini perfection.",addr:"1209 E 11th St",tags:['bistro','craft','eastside'],score:36},
+    {id:'honey-moon',name:"Honey Moon Spirit Lounge",desc:"Swing music, eclectic bungalow. Blind double dates approved.",addr:"624 W 34th St",tags:['intimate','music','date'],score:28},
+    {id:'kinfolk-fd',name:"Kinfolk Cocktail Lounge",desc:"Cellar entrance, candles, serious spirits. Says something about you.",addr:"303 Red River St",tags:['cellar','intimate','spirits'],score:22},
+    {id:'ember-fd',name:"Ember Kitchen",desc:"Impressive without being stuffy. Chef's counter is a conversation starter.",addr:"800 W Cesar Chavez",tags:['romantic','special','food'],score:16},
+  ],
+  whiskey:[
+    {id:'seven-grand-w',name:"Seven Grand",desc:"3 pool tables, cigars, 7 house-recommended pours, live jazz.",addr:"405 E 7th St",tags:['pool','cigars','jazz'],score:53},
+    {id:'still-austin',name:"Still Austin Whiskey Co.",desc:"Grain-to-glass distillery. Tour + tasting + live music outside.",addr:"440 E St Elmo Rd",tags:['distillery','tour','local'],score:47},
+    {id:'whislers-w',name:"Whisler's",desc:"Old fashioned culture at its peak. Cozy, dark, no bad nights.",addr:"1816 E 6th St",tags:['oldfashioned','classic','date'],score:39},
+    {id:'roosevelt-w',name:"The Roosevelt Room",desc:"Cocktails by era. The Black Pearl smoked in a box is unreal.",addr:"307 W 5th St",tags:['craft','smoked','era'],score:33},
+    {id:'crowded-barrel',name:"Crowded Barrel Whiskey Co.",desc:"Hill Country escape. Mystical wooden interior. NA options too.",addr:"16221 Crystal Hills Dr",tags:['hillcountry','distillery','escape'],score:25},
+    {id:'eureka-w',name:"Eureka!",desc:"Beer and whiskey menu impressive. Smoked cocktails are the move.",addr:"200 E 6th St",tags:['smoked','whiskey','livemusic'],score:19},
+    {id:'kinfolk-w',name:"Kinfolk Cocktail Lounge",desc:"Spirits library with serious scotch selections. Worth the cellar trip.",addr:"303 Red River St",tags:['scotch','intimate','cellar'],score:13},
+  ],
+  latenight:[
+    {id:'magnolia-cafe',name:"Magnolia Cafe",desc:"24/7 on weekends. The shredded beef omelette fixes everything.",addr:"1920 S Congress Ave",tags:['24hr','breakfast','southcongress'],score:67},
+    {id:'taqueria-d10',name:"Taqueria De Diez (D/10)",desc:"Taco speakeasy hidden in an alley. Open until 1am Thu–Sat.",addr:"206 Trinity St",tags:['tacos','alley','latenight'],score:55},
+    {id:'caroline-ln',name:"Caroline",desc:"Open til midnight weekdays, 1am weekends. Biscuits at any hour.",addr:"621 N Congress Ave",tags:['cafe','lateish','biscuits'],score:38},
+    {id:'epoch',name:"Epoch Coffee",desc:"24 hours Fri–Sun. Original Austin night owl HQ.",addr:"221 W N Loop Blvd",tags:['24hr','coffee','workfriendly'],score:31},
+    {id:'bennu',name:"Bennu Coffee",desc:"Open 24/7 always. Outlets everywhere. Free wifi with purchase.",addr:"2001 E MLK Jr Blvd",tags:['24hr','wifi','eastside'],score:24},
+    {id:'upstairs-caroline-ln',name:"Upstairs at Caroline",desc:"Open til midnight. Games, drinks, good vibes til close.",addr:"109 E 7th St",tags:['latenight','games','downtown'],score:18},
+  ],
+  focusmode:[
+    {id:'figure8',name:"Figure 8 Coffee",desc:"Best cappuccinos in Austin per coffee snobs. Vintage-chic interior.",addr:"1111 Chicon St",tags:['craft','quiet','eastside'],score:49},
+    {id:'houndstooth',name:"Houndstooth Coffee",desc:"Best latte in Austin. Reliable wifi, couch seating, open til 7pm.",addr:"4200 N Lamar Blvd",tags:['wifi','comfy','northlamar'],score:44},
+    {id:'bennu-fm',name:"Bennu Coffee",desc:"24/7, outlets at every table, printer on site. Remote work HQ.",addr:"2001 E MLK Jr Blvd",tags:['24hr','outlets','printer'],score:38},
+    {id:'epoch-fm',name:"Epoch Coffee",desc:"24/7 Fri–Sun. Co-working energy, every table has an outlet.",addr:"221 W N Loop Blvd",tags:['24hr','wifi','students'],score:33},
+    {id:'once-over',name:"Once Over Coffee Bar",desc:"Bouldin Creek patio is the quiet morning spot in Austin.",addr:"2009 S 1st St",tags:['patio','quiet','southaustin'],score:27},
+    {id:'monkey-nest',name:"Monkey Nest Coffee",desc:"Large space, seasonal specials, dog-friendly, loyal regulars.",addr:"5353 Burnet Rd",tags:['spacious','seasonal','burnett'],score:21},
+    {id:'lucky-lab',name:"Lucky Lab Coffee Co.",desc:"UT area gem. Patio, cozy, great chai, good for studying.",addr:"2421 San Antonio St",tags:['patio','studying','UT'],score:17},
+  ],
+  sundayreset:[
+    {id:'mozarts',name:"Mozart's Coffee Roasters",desc:"Lake Austin waterfront, live music, open until midnight. Sunday ritual.",addr:"3825 Lake Austin Blvd",tags:['lakeside','livemusic','views'],score:52},
+    {id:'hillside-brunch',name:"Hillside Farmacy",desc:"Crab cake, espresso martini, old pharmacy charm. Chic Austin brunch.",addr:"1209 E 11th St",tags:['brunch','craft','eastside'],score:45},
+    {id:'two-hands',name:"Two Hands",desc:"Big Brekky, iced brown sugar latte, South Congress morning energy.",addr:"1011 S Congress Ave",tags:['brunch','southcongress','aesthetic'],score:38},
+    {id:'honey-moon-b',name:"Honey Moon Spirit Lounge",desc:"Biscuits with beetroot butter and local honey. Swing music live.",addr:"624 W 34th St",tags:['biscuits','swingmusic','cozy'],score:31},
+    {id:'magnolia-brunch',name:"Magnolia Cafe",desc:"Open 24/7 weekends. The post-bar brunch tradition since forever.",addr:"1920 S Congress Ave",tags:['24hr','classic','southcongress'],score:26},
+    {id:'josephine-brunch',name:"Josephine House",desc:"Garden patio Sunday brunch. Small portions, stunning presentation.",addr:"1601 Waterston Ave",tags:['garden','hydepark','brunch'],score:20},
+    {id:'geraldines-brunch',name:"Geraldine's",desc:"Bottomless brunch vibes, live music, craft cocktails. Sunday goals.",addr:"605 Davis St",tags:['livemusic','brunch','cocktails'],score:15},
+  ],
+};
+
+const VOTES_KEY = 'av_votes_v3';
+const NOMS_KEY = 'av_noms_v2';
+
+let votes = {};
+let noms = {};
+let currentCat = null;
+let expanded = false;
+
+try { votes = JSON.parse(localStorage.getItem(VOTES_KEY) || '{}'); } catch(e){}
+try { noms = JSON.parse(localStorage.getItem(NOMS_KEY) || '{}'); } catch(e){}
+
+function saveVotes() { try { localStorage.setItem(VOTES_KEY, JSON.stringify(votes)); } catch(e){} }
+function saveNoms() { try { localStorage.setItem(NOMS_KEY, JSON.stringify(noms)); } catch(e){} }
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function getScore(catId, placeId, base) {
+  const v = votes[catId + ':' + placeId];
+  if (v === 'up') return base + 1;
+  if (v === 'dn') return base - 1;
+  return base;
+}
+
+// HOME
+function renderHome() {
+  currentCat = null; expanded = false;
+  document.getElementById('home-view').style.display = 'block';
+  document.getElementById('list-view').style.display = 'none';
+  const header = document.getElementById('app-header');
+  header.innerHTML = '<div class="header-logo">Austin <span>Vibe</span></div>';
+
+  const grid = document.getElementById('cat-grid');
+  grid.innerHTML = CATS.map(c => {
+    const pool = [...(PLACES[c.id] || []), ...(noms[c.id] || [])];
+    return `<div class="cat-card" onclick="showList('${c.id}')">
+      <span class="cat-emoji">${c.emoji}</span>
+      <div class="cat-name">${c.name}</div>
+      <div class="cat-sub">${c.sub}</div>
+      <div class="cat-count">${pool.length} spots</div>
+    </div>`;
+  }).join('');
+}
+
+// LIST VIEW
+function showList(catId) {
+  currentCat = catId; expanded = false;
+  document.getElementById('home-view').style.display = 'none';
+  document.getElementById('list-view').style.display = 'block';
+  const cat = CATS.find(c => c.id === catId);
+
+  const header = document.getElementById('app-header');
+  header.innerHTML = `<button class="back-btn" onclick="renderHome()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    All vibes
+  </button>`;
+
+  document.getElementById('list-title').textContent = cat.emoji + ' ' + cat.name;
+  document.getElementById('list-sub').textContent = cat.sub;
+
+  renderPlacesList();
+  window.scrollTo(0, 0);
+}
+
+function renderPlacesList() {
+  const catId = currentCat;
+  const catNominations = (noms[catId] || []);
+  let allPlaces = [...(PLACES[catId] || [])];
+  catNominations.forEach(n => {
+    if (!allPlaces.find(p => p.id === n.id)) allPlaces.push(n);
+  });
+  allPlaces.sort((a, b) => getScore(catId, b.id, b.score) - getScore(catId, a.id, a.score));
+
+  const top10 = allPlaces.slice(0, 10);
+  const rest = allPlaces.slice(10);
+
+  let html = '';
+
+  top10.forEach((p, i) => { html += buildPlaceCard(p, i, catId); });
+
+  if (rest.length > 0) {
+    if (!expanded) {
+      html += `<div class="expand-row">
+        <button class="expand-btn" onclick="toggleExpand()">
+          <span class="expand-arrow" id="expand-arrow">▾</span>
+          Show ${rest.length} more spots
+        </button>
+      </div>`;
+    } else {
+      rest.forEach((p, i) => { html += buildPlaceCard(p, i + 10, catId); });
+      html += `<div class="expand-row">
+        <button class="expand-btn" onclick="toggleExpand()">
+          <span class="expand-arrow open" id="expand-arrow">▾</span>
+          Show less
+        </button>
+      </div>`;
+    }
+  }
+
+  html += `<div class="nominate-box">
+    <div class="nom-title">🔍 Know a spot that belongs here?</div>
+    <div class="nom-sub">Nominate it — get 5 upvotes to join the main list</div>
+    <div class="nom-inputs">
+      <input class="nom-input" id="nom-name" placeholder="Place name" autocomplete="off"/>
+      <div class="nom-row">
+        <input class="nom-input" id="nom-addr" placeholder="Neighborhood / Address" autocomplete="off" style="flex:1"/>
+        <button class="nom-submit" onclick="nominatePlace('${catId}')">Add ↑</button>
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('places-list').innerHTML = html;
+}
+
+function buildPlaceCard(p, i, catId) {
+  const score = getScore(catId, p.id, p.score);
+  const voteState = votes[catId + ':' + p.id] || null;
+  const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+  const communityTag = p.community ? `<span class="community-badge">${(p.votes||0)<5?'pending':'community'}</span>` : '';
+  const pendingClass = p.community && (p.votes||0) < 5 ? ' pending-place' : '';
+  const scoreClass = score > p.score ? ' positive' : score < p.score ? ' negative' : '';
+  const tags = (p.tags||[]).slice(0,3).map(t => `<span class="place-tag">${t}</span>`).join('');
+  return `<div class="place-card${pendingClass}">
+    <div class="place-rank ${rankClass}">${i+1}</div>
+    <div class="place-info">
+      <div class="place-name">${p.name}${communityTag}</div>
+      <div class="place-desc">${p.desc}</div>
+      <div class="place-addr">${p.addr||''}</div>
+      <div class="place-tags">${tags}</div>
+    </div>
+    <div class="vote-col">
+      <button class="vote-btn${voteState==='up'?' up-voted':''}" onclick="castVote('${catId}','${p.id}','up',${p.score})" aria-label="Upvote">▲</button>
+      <div class="vote-score${scoreClass}">${score}</div>
+      <button class="vote-btn${voteState==='dn'?' dn-voted':''}" onclick="castVote('${catId}','${p.id}','dn',${p.score})" aria-label="Downvote">▼</button>
+    </div>
+  </div>`;
+}
+
+function toggleExpand() {
+  expanded = !expanded;
+  renderPlacesList();
+}
+
+function castVote(catId, placeId, dir, base) {
+  const key = catId + ':' + placeId;
+  const prev = votes[key];
+  if (prev === dir) { delete votes[key]; } else { votes[key] = dir; }
+  saveVotes();
+
+  const catNoms = noms[catId] || [];
+  const nom = catNoms.find(n => n.id === placeId);
+  if (nom) {
+    if (dir === 'up' && prev !== 'up') nom.votes = (nom.votes||0) + 1;
+    else if (dir === 'up' && prev === 'up') nom.votes = Math.max(0, (nom.votes||0) - 1);
+    nom.community = true;
+    saveNoms();
+  }
+
+  renderPlacesList();
+  showToast(dir === 'up' ? '🔥 Voted up!' : '👎 Voted down');
+}
+
+function nominatePlace(catId) {
+  const name = (document.getElementById('nom-name').value || '').trim();
+  const addr = (document.getElementById('nom-addr').value || '').trim();
+  if (!name) { showToast('Enter a place name first'); return; }
+  if (!noms[catId]) noms[catId] = [];
+  const id = 'nom-' + name.toLowerCase().replace(/[^a-z0-9]/g,'') + '-' + Date.now();
+  noms[catId].push({ id, name, addr: addr || 'Austin, TX', desc: 'Community nomination — vote it up to confirm!', score: 0, votes: 0, tags: ['community'], community: true });
+  saveNoms();
+  renderPlacesList();
+  showToast(`"${name}" nominated! Share to get it voted up 🙌`);
+}
+
+function shareList() {
+  const cat = CATS.find(c => c.id === currentCat);
+  const text = `Where should we go? Vote on the best ${cat.name} spots in Austin 🔥`;
+  const url = window.location.href.split('?')[0] + '?vibe=' + currentCat;
+  if (navigator.share) {
+    navigator.share({ title: 'Austin Vibe — ' + cat.name, text, url }).catch(()=>{});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => showToast('Link copied! 📋'));
+  } else {
+    showToast('austinvibe.co/' + currentCat);
+  }
+}
+
+// Handle deep link
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const vibe = params.get('vibe');
+  renderHome();
+  if (vibe && CATS.find(c => c.id === vibe)) {
+    showList(vibe);
+  }
+})();
+</script>
+</body>
+</html>
