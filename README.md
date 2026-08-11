@@ -1,3 +1,5 @@
+# Family Finance App
+
 <img width="1809" height="1296" alt="Screenshot 2026-04-26 at 11 09 08 PM" src="https://github.com/user-attachments/assets/1f2f71b2-0f6c-4dcc-9c50-1651ade0095f" />
 
 <img width="1809" height="1296" alt="Screenshot 2026-04-26 at 11 09 25 PM" src="https://github.com/user-attachments/assets/fb5d8e56-72b6-4091-8c54-c523b0cfdd81" />
@@ -7,6 +9,12 @@
 <img width="1809" height="1296" alt="Screenshot 2026-04-26 at 11 09 43 PM" src="https://github.com/user-attachments/assets/2c632e17-6190-46f3-bd33-f5cb69cc3fd9" />
 
 <img width="1809" height="1296" alt="Screenshot 2026-04-26 at 11 09 53 PM" src="https://github.com/user-attachments/assets/d4d737ed-264b-4237-b418-7b00751854ed" />
+
+
+
+
+
+
 
 
 # React + TypeScript + Vite
